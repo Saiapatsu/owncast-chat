@@ -83,6 +83,13 @@ return function (stdin, stdout, greeting, global)
   local buffer = ''
 
   local function evaluateLine(line)
+    if not line:match("^/") then
+		global.say(line)
+		return ""
+	end
+	
+	line = line:sub(2)
+	
     if line == "<3" or line == "♥" or line == "❤" then
       stdout:write("I " .. c("err") .. "♥" .. c() .. " you too!\n")
       return '> '
@@ -174,7 +181,7 @@ return function (stdin, stdout, greeting, global)
   end
 
   local function start(historyLines, onSaveHistoryLines)
-    local prompt = "> "
+    local prompt = ""
     local history = History.new()
     if historyLines then
       history:load(historyLines)
@@ -190,7 +197,7 @@ return function (stdin, stdout, greeting, global)
       assert(not err, err)
       coroutine.wrap(function ()
         if line then
-          prompt = evaluateLine(line)
+          evaluateLine(line)
           editor:readLine(prompt, onLine)
           -- TODO: break out of >> with control+C
         elseif onSaveHistoryLines then
@@ -207,7 +214,8 @@ return function (stdin, stdout, greeting, global)
     table.foreach(_builtinLibs, function(_, lib)
       local requireName = lib:gsub('-.', function (char) return char:sub(2):upper() end)
       local req = string.format('%s = require("%s")', requireName, lib)
-      evaluateLine(req)
+      -- evaluateLine(req)
+	  global[requireName] = require(lib)
     end)
   end
 
