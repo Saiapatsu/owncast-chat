@@ -68,6 +68,23 @@ local function xml(str, closing, tag)
 	end
 end
 
+local escapes = {
+	quot = '"',
+	apos = "'",
+	amp = "&",
+	lt = "<",
+	gt = ">",
+}
+
+local function entity(str)
+	local n = str:match("^#(%d+)$")
+	if n then
+		return string.char(n)
+	end
+	
+	return escapes[str]
+end
+
 local function neaten(str)
 	return str
 		-- Remove newlines, they are also accompanied by a <br>
@@ -75,7 +92,7 @@ local function neaten(str)
 		-- Deal with HTML
 		:gsub("(<(/?)([^> ]+)[^>]*>)", xml)
 		-- Unescape XML entities
-		:gsub("&#(%d+);", string.char)
+		:gsub("&([^; ]+);", entity)
 end
 
 -- TODO if line ends at screen width, do not emit newline or spaces i.e. don't make an empty line
