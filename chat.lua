@@ -30,11 +30,6 @@ for k,v in pairs({
 	c[k] = ("\027[%sm"):format(v:gsub(".", function(x) return tostring(string.byte(x)) .. ";" end):sub(1, -2))
 end
 
-local function img(str)
-	-- return string.format("%s%s%s", c.g, str:match('alt="([^"]+)'), c.r)
-	return str:match('alt="([^"]+)')
-end
-
 -- Width in columns of the "gutter" to the left which is to be reserved for
 -- usernames and system messages and kept clear of user-submitted messages
 local gutter = 12
@@ -45,16 +40,13 @@ local chatfmt = "%s%" .. gutter-1 .. "s%s %s%s"
 local renamefmt = "%s%" .. gutter-1 .. "s%s renamed from %s%s"
 local wrapfind = string.rep(".", width - gutter)
 local spaces = string.rep(" ", gutter)
-
-local function long(str)
-	return str .. spaces
-end
+local spaces1 = "%1" .. spaces
 
 local function xml(str, closing, tag)
 	if tag == "p" then
 		return ""
 	elseif tag == "img" then
-		return img(str)
+		return str:match('alt="([^"]+)')
 	elseif tag == "em" then
 		return "*"
 	elseif tag == "strong" then
@@ -118,7 +110,7 @@ local function gutterwrap(str, x)
 	
 	str = neaten(str)
 	if #str > width - x then
-		return str:sub(1, width - x) .. spaces .. str:sub(width - x + 1):gsub(wrapfind, long)
+		return str:sub(1, width - x) .. spaces .. str:sub(width - x + 1):gsub(wrapfind, spaces1)
 	else
 		return str
 	end
