@@ -42,3 +42,7 @@ It's in a terminal because it's what was easy to make, ideally it'd be in
 an ugly win32 gui, anything's better than React
 
 Goes well with streamlink, open `https://(host)/hls/0/stream.m3u8` with it
+
+You can get a little bit of scrollback from the server from:  
+`https://(host)/api/chat?accessToken=...`  
+It's not in a format `chat` can ingest (one event on each line)
