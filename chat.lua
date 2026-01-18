@@ -240,11 +240,12 @@ t = timer.setInterval(500, function()
 	fs.read(fd, nil, rpos, onRead)
 end)
 
--- sock = net.connect(54197, "127.0.0.1", function(a) print("Socket connected") end)
+-- sock = require("net").connect(54197, "127.0.0.1", function(a) print("Socket connected") end)
 sock = require("net").connect(54197, "127.0.0.1")
 
 function say(str)
-	sock:write(string.format('{"type":"CHAT","body":%s}\n', json.stringify(tostring(str))))
+	local payload = string.format('{"type":"CHAT","body":%s}\n', json.stringify(tostring(str)))
+	sock:write(payload)
 end
 
 require("repl")(process.stdin.handle, process.stdout.handle, "REPL active", getfenv()).start()
