@@ -2,7 +2,7 @@
 
 To run this, you need:
 * [websocat](https://github.com/vi/websocat) to get chat
-* [luvit](luvit.io) as the programming environment
+* [luvit](https://luvit.io/) as the programming environment
 * [ncat](https://nmap.org/ncat/), netcat may work too
 * something that behaves like `tee` (output to both file and output),
   mine's from MinGW, although you could just edit bouncer to output to disk
@@ -13,9 +13,9 @@ Open the stream's webpage with developer tools (Network tab) open and look for
 
 Replace `https` with `wss`.
 
-Open cmd in this folder, write `set WS=(the above wss URL)`  
-Alternatively, add that line to the top of bouncer, but double the % if
-there's one near the end of the URL
+Open cmd in this folder, enter `set WS=(the above wss URL)`  
+Alternatively, add that line to the top of bouncer, but double the %
+near the end of the URL so it won't get mangled by batch
 
 Run bouncer, it will start logging to `wss-(current date).jsonl`
 
