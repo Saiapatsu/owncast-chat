@@ -14,6 +14,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+2026-01-18 07:32:26 This file has been modified by Wist to make it not suck
+
 --]]
 --[[lit-meta
   name = "luvit/readline"
@@ -365,8 +367,8 @@ local keyHandlers =
   {{'\027[F', '\027OF', '\027[4~', 5}, function(self)
     self:moveEnd()
   end},
-  -- Control-U
-  {{21}, function(self)
+  -- Control-U, Escape
+  {{21, 27}, function(self)
     self:deleteLine()
   end},
   -- Control-K
