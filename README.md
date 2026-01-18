@@ -46,3 +46,9 @@ Goes well with streamlink, open `https://(host)/hls/0/stream.m3u8` with it
 You can get a little bit of scrollback from the server from:  
 `https://(host)/api/chat?accessToken=...`  
 It's not in a format `chat` can ingest (one event on each line)
+
+The viewer count is in `/api/status`, which this doesn't consult yet, examples:
+```
+{"serverTime":"2026-01-13T11:08:30.289289197Z","lastConnectTime":"2026-01-13T08:25:51Z","lastDisconnectTime":null,"versionNumber":"0.2.4","streamTitle":"","viewerCount":9,"online":true}
+{"serverTime":"2026-01-13T11:13:45.56616856Z","lastConnectTime":null,"lastDisconnectTime":"2026-01-13T11:12:15Z","versionNumber":"0.2.4","streamTitle":"","online":false}
+```
