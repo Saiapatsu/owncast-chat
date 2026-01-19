@@ -22,13 +22,17 @@ for k,v in pairs({
 	[6] = "\022\035", -- 5 dark purple
 	[7] = "\001\031", -- c light red
 	
-	g = "\001\030", -- dark gray
-	w = "\001\037", -- white
+	g = "\001\030", -- dark gray, subdued
+	w = "\001\037", -- white, highlighted
+	x = "\001\031", -- light red, danger
 	r = "\000", -- reset
 }) do
 	-- Expand each byte to numerals, separate with ;
 	c[k] = ("\027[%sm"):format(v:gsub(".", function(x) return tostring(string.byte(x)) .. ";" end):sub(1, -2))
 end
+
+-- https://a/ConnerWill/d4b6c776b509add763e17f9f113fd25b
+c.up = "\027[1A" -- "moves cursor up # lines"
 
 -- Width in columns of the "gutter" to the left which is to be reserved for
 -- usernames and system messages and kept clear of user-submitted messages
@@ -133,8 +137,23 @@ end
 			-- or uanon(x.user)
 		-- lastid = x.user.id -- feels wrong
 
+function fence(str)
+	local half = (width - #str - 2) / 2
+	return string.format("%s %s %s", string.rep("-", math.ceil(half)), str, string.rep("-", math.floor(half)))
+end
+
 function line(str)
 	local x = json.parse(str)
+	
+	if type(x) ~= "table" then
+		print(string.format("\r%s%s%s%s %s %s|%s%s%s|%s\n%s%s%s%s"
+			, c.x, fence("Failed to parse JSON"), c.r
+			, type(str), type(x), c.x, c.r, str, c.x, c.r
+			, c.x, string.rep("-", width), c.r, c.up
+		))
+		return
+	end
+	
 	if x.type == "CHAT" then
 		local color = ucolor(x.user)
 		local name = uanon(x.user)
@@ -147,7 +166,7 @@ function line(str)
 		print(string.format(renamefmt, color, name, c.g, oldname, c.r))
 		
 	elseif x.type == "CHAT_ACTION" then
-		print(string.format("\r%s%s%s", c.g, neaten(x.body), c.r))
+		print(string.format("\r%s%s%s%s", c.g, fence(neaten(x.body)), c.r, c.up))
 		
 	elseif x.type == "CONNECTED_USER_INFO" then
 		local color = ucolor(x.user)
