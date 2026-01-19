@@ -245,7 +245,7 @@ end)
 sock = require("net").connect(54197, "127.0.0.1")
 
 function say(str)
-	if str == "" then return end
+	if not str:match("[^ ]") then return end
 	local payload = string.format('{"type":"CHAT","body":%s}\n', json.stringify(tostring(str)))
 	sock:write(payload)
 end
