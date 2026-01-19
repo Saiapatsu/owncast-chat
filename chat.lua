@@ -32,7 +32,7 @@ end
 
 -- Width in columns of the "gutter" to the left which is to be reserved for
 -- usernames and system messages and kept clear of user-submitted messages
-local gutter = 12
+local gutter = 11
 -- Width in columns of the tty
 local width = 80
 -- Everything derived from the above
