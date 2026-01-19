@@ -133,7 +133,7 @@ end
 			-- or uanon(x.user)
 		-- lastid = x.user.id -- feels wrong
 
-local function line(str)
+function line(str)
 	local x = json.parse(str)
 	if x.type == "CHAT" then
 		local color = ucolor(x.user)
@@ -165,7 +165,7 @@ local function handleError(e)
 	print(line)
 end
 
-local function line2(str)
+function line2(str)
 	lastline = str
 	xpcall(line, handleError, str)
 end
