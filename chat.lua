@@ -216,15 +216,24 @@ local function onRead(err, str)
 	fs.read(fd, nil, rpos, onRead)
 end
 
--- Seek to tail, discard any line it might've jumped into the middle of
-rpos = math.max(0, fs.fstatSync(fd).size - 6*4096)
-
-fs.read(fd, nil, rpos, function(err, str)
+local function onReadRecover(err, str)
 	if err or str == "" then return end
 	local b = str:match("()\n")
 	rpos = rpos + b + 1
 	return onRead(err, str:sub(b + 1))
-end)
+end
+
+-- Seek to tail, discard any line it might've jumped into the middle of
+function tail()
+	rpos = math.max(0, fs.fstatSync(fd).size - 6*4096)
+	if rpos == 0 then
+		fs.read(fd, nil, rpos, onRead)
+	else
+		fs.read(fd, nil, rpos, onReadRecover)
+	end
+end
+
+tail()
 
 -- I don't know how tail -f does it on Windows but it has a very slight
 -- delay sometimes, so it may very well be polling
