@@ -175,7 +175,7 @@ end
 -- end
 
 -- Get filename of last log (wiping off the newline...) and open it
-local name = fs.readFileSync("lastout.txt"):match("[^\r\n]+")
+local name = fs.readFileSync("wss-last.txt"):match("[^\r\n]+")
 local fd = fs.openSync(name, "r")
 
 -- Timer handle
