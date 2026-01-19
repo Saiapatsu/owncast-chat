@@ -119,7 +119,7 @@ end
 local function uanon(user, str)
 	str = str or user.displayName
 	return str == "Anonymous"
-		and string.format("(%s)", user.id)
+		and string.format("*%s", user.id)
 		or str
 end
 
