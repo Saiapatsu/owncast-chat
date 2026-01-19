@@ -36,8 +36,8 @@ local gutter = 12
 -- Width in columns of the tty
 local width = 80
 -- Everything derived from the above
-local chatfmt = "%s%" .. gutter-1 .. "s%s %s%s"
-local renamefmt = "%s%" .. gutter-1 .. "s%s renamed from %s%s"
+local chatfmt = "\r%s%" .. gutter-1 .. "s%s %s%s"
+local renamefmt = "\r%s%" .. gutter-1 .. "s%s renamed from %s%s"
 local wrapfind = string.rep(".", width - gutter)
 local spaces = string.rep(" ", gutter)
 local spaces1 = "%1" .. spaces
@@ -147,15 +147,15 @@ local function line(str)
 		print(string.format(renamefmt, color, name, c.g, oldname, c.r))
 		
 	elseif x.type == "CHAT_ACTION" then
-		print(string.format("%s%s%s", c.g, neaten(x.body), c.r))
+		print(string.format("\r%s%s%s", c.g, neaten(x.body), c.r))
 		
 	elseif x.type == "CONNECTED_USER_INFO" then
 		local color = ucolor(x.user)
 		local name = uanon(x.user)
-		print(string.format("%sConnected as %s%s%s", c.g, color, name, c.r))
+		print(string.format("\r%sConnected as %s%s%s", c.g, color, name, c.r))
 		
 	else
-		print(string.format("%s<%s> %s%s", c.g, x.type, str, c.r))
+		print(string.format("\r%s<%s> %s%s", c.g, x.type, str, c.r))
 	end
 end
 
