@@ -2,6 +2,8 @@ local json = require("json")
 local fs = require("fs")
 local timer = require("timer")
 
+local env = getfenv()
+
 local c = {}
 for k,v in pairs({
 	--theme-color-users-0: #bc1a32;
@@ -120,11 +122,21 @@ local function gutterwrap(str, x)
 	end
 end
 
+-- Filled in from config
+renames = {}
+
+function loadSetup()
+	setfenv(assert(loadfile("./setup.lua")), env)()
+end
+
+loadSetup()
+
 local function uanon(user, str)
 	str = str or user.displayName
-	return str == "Anonymous"
-		and string.format("*%s", user.id)
-		or str
+	if str == "Anonymous" then
+		return string.format("*%s", user.id)
+	end
+	return renames[user.id] or str
 end
 
 local function ucolor(user)
@@ -269,4 +281,4 @@ function say(str)
 	sock:write(payload)
 end
 
-require("repl")(process.stdin.handle, process.stdout.handle, "REPL active", getfenv()).start()
+require("repl")(process.stdin.handle, process.stdout.handle, "REPL active", env).start()
