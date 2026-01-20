@@ -165,6 +165,9 @@ function fence(str)
 	return string.format("%s %s %s", string.rep("-", math.ceil(half)), str, string.rep("-", math.floor(half)))
 end
 
+local lastHour = nil
+-- timestamp":"2026-01-19T23:53:58.051312309Z
+
 function line(str)
 	local x = json.parse(str)
 	
@@ -175,6 +178,14 @@ function line(str)
 			, c.x, string.rep("-", width), c.r, c.up
 		))
 		return
+	end
+	
+	if x.timestamp then
+		local hour = x.timestamp:sub(1, 13)
+		if hour ~= lastHour then
+			lastHour = hour
+			print(string.format("%s%s%s%s", c.g, string.rep("-", width), c.up, c.r))
+		end
 	end
 	
 	if x.type == "CHAT" then
