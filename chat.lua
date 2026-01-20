@@ -38,15 +38,26 @@ c.up = "\027[1A" -- "moves cursor up # lines"
 
 -- Width in columns of the "gutter" to the left which is to be reserved for
 -- usernames and system messages and kept clear of user-submitted messages
-local gutter = 11
+gutter = 11
 -- Width in columns of the tty
-local width = 80
+width = 80
 -- Everything derived from the above
-local chatfmt = "\r%s%" .. gutter-1 .. "s%s %s%s"
-local renamefmt = "\r%s%" .. gutter-1 .. "s%s renamed from %s%s"
-local wrapfind = string.rep(".", width - gutter)
-local spaces = string.rep(" ", gutter)
-local spaces1 = "%1" .. spaces
+-- chatfmt
+-- renamefmt
+-- wrapfind
+-- spaces
+-- spaces1
+
+-- Update expected tty width
+function setWidth(gutter, width)
+	chatfmt = "\r%s%" .. gutter-1 .. "s%s %s%s"
+	renamefmt = "\r%s%" .. gutter-1 .. "s%s renamed from %s%s"
+	wrapfind = string.rep(".", width - gutter)
+	spaces = string.rep(" ", gutter)
+	spaces1 = "%1" .. spaces
+end
+
+setWidth(gutter, width)
 
 local function xml(str, closing, tag)
 	if tag == "p" then
