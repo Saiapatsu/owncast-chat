@@ -459,7 +459,6 @@ local keyHandlers =
 function Editor:onKey(key)
   local char = string.byte(key, 1)
   local consumedKeys = nil
-    self:insertAbove(string.format("key(s): %s", escapeKeysForDisplay(key)))
 
   for _, keyHandler in ipairs(keyHandlers) do
     local handledKeys = keyHandler[1]
