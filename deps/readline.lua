@@ -118,7 +118,7 @@ function Editor:refreshLine()
 end
 function Editor:insertAbove(line)
   self:homeClear()
-  self.stdout:write(command .. line .. "\n", function()
+  self.stdout:write(line .. "\n", function()
     self:refreshLine()
   end)
 end
