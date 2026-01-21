@@ -38,6 +38,7 @@ local sub = ustring.sub
 local chlen = ustring.chlen
 local gmatch = ustring.gmatch
 local find = ustring.find
+local match = ustring.match
 local remove = table.remove
 local insert = table.insert
 local concat = table.concat
@@ -241,6 +242,13 @@ function Editor:deleteWord()
   self:refreshLine()
 end
 
+function Editor:deleteWordRight()
+  local line = self.line
+  local position = match(line, self.wordPattern .. " *()", self.position)
+  self.line = sub(line, 1, self.position - 1) .. sub(line, position)
+  self:refreshLine()
+end
+
 function Editor:jumpLeft()
   self.position = findLeft(self.line, self.position, self.wordPattern)
   self:refreshLine()
@@ -386,6 +394,10 @@ local keyHandlers =
   -- Delete Key
   {{'\027[3~'}, function(self)
     self:delete()
+  end},
+  -- Control-Delete
+  {{'\027[3;5~'}, function(self)
+    self:deleteWordRight()
   end},
   -- Control Left Arrow, Alt Left Arrow (iTerm.app), Alt Left Arrow (Terminal.app)
   {{'\027[1;5D', '\027\027[D', '\027b'}, function(self)
