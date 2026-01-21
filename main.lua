@@ -41,7 +41,7 @@ c.up = "\027[1A" -- "moves cursor up # lines"
 -- usernames and system messages and kept clear of user-submitted messages
 gutter = 11
 -- Width in columns of the tty
-width = uv.tty_get_winsize(process.stdout.handle)
+columns = uv.tty_get_winsize(process.stdout.handle)
 -- Everything derived from the above
 -- chatfmt
 -- renamefmt
@@ -49,16 +49,16 @@ width = uv.tty_get_winsize(process.stdout.handle)
 -- spaces
 -- spaces1
 
--- Update expected tty width
-function setWidth(gutter, width)
+-- Update expected tty columns
+function setColumns(gutter, columns)
 	chatfmt = "\r%s%" .. gutter-1 .. "s%s %s%s"
 	renamefmt = "\r%s%" .. gutter-1 .. "s%s renamed from %s%s"
-	wrapfind = string.rep(".", width - gutter)
+	wrapfind = string.rep(".", columns - gutter)
 	spaces = string.rep(" ", gutter)
 	spaces1 = "%1" .. spaces
 end
 
-setWidth(gutter, width)
+setColumns(gutter, columns)
 
 local function xml(str, closing, tag)
 	if tag == "p" then
@@ -115,7 +115,7 @@ local function gutterwrap(str, x)
 	-- iw: must write if exceeding this
 	-- foo: last unwritten pos in string
 	-- local foo = 1
-	-- local iw = width - x + 1
+	-- local iw = columns - x + 1
 	-- local lastword = 0
 	-- local rope = {}
 	-- for a, b in str:gmatch("()[^ ]+()") do
@@ -127,8 +127,8 @@ local function gutterwrap(str, x)
 	-- end
 	
 	str = neaten(str)
-	if #str > width - x then
-		return str:sub(1, width - x) .. spaces .. str:sub(width - x + 1):gsub(wrapfind, spaces1)
+	if #str > columns - x then
+		return str:sub(1, columns - x) .. spaces .. str:sub(columns - x + 1):gsub(wrapfind, spaces1)
 	else
 		return str
 	end
@@ -162,7 +162,7 @@ end
 		-- lastid = x.user.id -- feels wrong
 
 function fence(str)
-	local half = (width - #str - 2) / 2
+	local half = (columns - #str - 2) / 2
 	return string.format("%s %s %s", string.rep("-", math.ceil(half)), str, string.rep("-", math.floor(half)))
 end
 
@@ -176,7 +176,7 @@ function line(str)
 		print(string.format("\r%s%s%s%s %s %s|%s%s%s|%s\n%s%s%s%s"
 			, c.x, fence("Failed to parse JSON"), c.r
 			, type(str), type(x), c.x, c.r, str, c.x, c.r
-			, c.x, string.rep("-", width), c.r, c.up
+			, c.x, string.rep("-", columns), c.r, c.up
 		))
 		return
 	end
