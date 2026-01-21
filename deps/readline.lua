@@ -36,6 +36,7 @@ local ustring = require "ustring"
 local emptyline = ustring.new()
 local sub = ustring.sub
 local chlen = ustring.chlen
+local len = ustring.len
 local gmatch = ustring.gmatch
 local find = ustring.find
 local match = ustring.match
@@ -91,6 +92,7 @@ local Editor = {}
 -- Assuming current line is on screen, go to its beginning even if it has wrapped
 function Editor:homeClear()
   local rows = math.floor((self.position - 1) / self.columns)
+  -- Move up and to the beginning, clear to end of screen
   local command = string.format("\x1b[%dF\x1b[0J", rows)
   self.stdout:write(command)
 end
@@ -106,14 +108,23 @@ function Editor:refreshLine()
     position = (#self.cover * (position - 1)) + 1
   end
 
+  local rows = math.floor((self.position - 1) / self.columns)
+  local rows2 = math.floor((len(self.line)) / self.columns)
+  local n = rows2 - rows
+  -- line = string.rep(tostring(n), #line)
+
   -- Cursor to left edge
-  local command = "\x1b[0G"
-  -- Write the prompt and the data before cursor in buffer content.
-               .. self.prompt .. tostring(line:sub(1,self.position - 1))
-  -- Save the position,erase to right and write data left.
-               .. "\x1b7\x1b[0K" .. tostring(line:sub(self.position,-1))
-  -- Move cursor to original position.
-               .. "\x1b8"
+  -- local command = "\x1b[0G"
+  -- -- Write the prompt and the data before cursor in buffer content.
+               -- .. self.prompt .. tostring(line:sub(1,self.position - 1))
+  -- -- Save the position,erase to right and write data left.
+               -- .. "\x1b7\x1b[0K" .. tostring(line:sub(self.position,-1))
+  -- -- Move cursor to original position.
+               -- .. "\x1b8"
+
+  -- Write the buffer, then go to the right row/column, PRAYING that all characters
+  -- are exactly one cell wide
+  local command = string.format("%s\x1b[%dF\x1b[%dC", tostring(line), rows2 - rows, (self.position - 1) % self.columns)
   self.stdout:write(command)
 end
 function Editor:insertAbove(line)
