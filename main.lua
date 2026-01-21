@@ -149,7 +149,7 @@ local function uanon(user, str)
 	if str == "Anonymous" then
 		return string.format("*%s", user.id)
 	end
-	return renames[user.id] or str
+	return renames[user.id] or str or "*ERROR"
 end
 
 local function ucolor(user)
@@ -281,7 +281,9 @@ local function onRead(err, str)
 	end
 	
 	-- There may be more data
-	fs.read(fd, nil, rpos, onRead)
+	-- The -1 is because, I shit you not, for some reason it used to skip single
+	-- characters and lead to slightly corrupt data or json parse fails sometimes
+	fs.read(fd, nil, rpos-1, onRead)
 end
 
 local function onReadRecover(err, str)
