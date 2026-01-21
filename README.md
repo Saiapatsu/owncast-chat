@@ -43,3 +43,14 @@ an ugly win32 gui, anything's better than React.
 
 Goes well with streamlink, open `https://(host)/hls/0/stream.m3u8` with it
 to watch the stream, you will need to set up streamlink on your own.
+
+You may have seen a screenshot with my font customized, here's how I recommend
+doing it on Windows.  
+Right-click in this folder and create a new shortcut. Point it to just `cmd.exe`.  
+Click the address bar in Explorer, copy the current folder path.  
+Right click the new shortcut, Properties, paste the path into `Start in:`.  
+Now customizations to conhost shouldn't be global to the entire system.  
+Press alt-space or the cmd icon at the top left of the window, Properties.  
+There, you can customize the column count and font. Use a TrueType font
+to see Unicode characters, otherwise you might just see question marks
+when somebody dumps Chinese or Japanese into chat.
