@@ -271,10 +271,10 @@ end
 
 function Editor:deleteWordRight()
   local line = self.line
-  local position = match(line, self.wordPattern .. " *()", self.position)
-  if position then
+  local _, e = find(line, self.wordPattern .. " *", self.position)
+  if e then
       self:homeClear()
-      self.line = sub(line, 1, self.position - 1) .. sub(line, position)
+      self.line = sub(line, 1, self.position - 1) .. sub(line, e + 1)
       self:refreshLine()
   end
 end
@@ -285,10 +285,12 @@ function Editor:jumpLeft()
   self:refreshLine()
 end
 function Editor:jumpRight()
-  self:homeClear()
   local _, e = find(self.line, self.wordPattern, self.position)
-  self.position = e and e + 1 or #self.line + 1
-  self:refreshLine()
+  if e then
+      self:homeClear()
+      self.position = e and e + 1 or #self.line + 1
+      self:refreshLine()
+  end
 end
 function Editor:clearScreen()
   self.stdout:write('\x1b[H\x1b[2J')
@@ -457,6 +459,7 @@ local keyHandlers =
 function Editor:onKey(key)
   local char = string.byte(key, 1)
   local consumedKeys = nil
+    self:insertAbove(string.format("key(s): %s", escapeKeysForDisplay(key)))
 
   for _, keyHandler in ipairs(keyHandlers) do
     local handledKeys = keyHandler[1]
