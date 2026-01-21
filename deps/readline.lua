@@ -327,7 +327,7 @@ local keyHandlers =
     end
   end},
   -- Backspace, Control-H
-  {{127, 8}, function(self)
+  {{8}, function(self)
     self:backspace()
   end},
   -- Control-D
@@ -368,7 +368,7 @@ local keyHandlers =
     self:moveEnd()
   end},
   -- Control-U
-  {{21}, function(self)
+  {{21, function(key) return key == "\27" and key or nil end}, function(self)
     self:deleteLine()
   end},
   -- Control-K
@@ -379,8 +379,8 @@ local keyHandlers =
   {{12}, function(self)
     self:clearScreen()
   end},
-  -- Control-W
-  {{23}, function(self)
+  -- Control-W, Control-Backspace
+  {{23, 127}, function(self)
     self:deleteWord()
   end},
   -- Delete Key
@@ -406,10 +406,6 @@ local keyHandlers =
   -- Printable characters
   {{function(key, char) return char > 31 and key:sub(1,chlen(key:byte())) or nil end}, function(self, consumedKeys)
     self:insert(consumedKeys)
-  end},
-  -- Escape
-  {{function(key) return key == "\27" and key or nil end}, function(self)
-    self:deleteLine()
   end},
 }
 
