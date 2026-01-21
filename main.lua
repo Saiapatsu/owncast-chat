@@ -184,7 +184,8 @@ function line(str)
 		local hour = x.timestamp:sub(1, 13)
 		if hour ~= lastHour then
 			lastHour = hour
-			print(string.format("%s%s%s%s", c.g, string.rep("-", width), c.up, c.r))
+			local str = x.timestamp:sub(1, 16):gsub("T", " ")
+			print(string.format("%s%s%s%s", c.g, fence(str), c.up, c.r))
 		end
 	end
 	
