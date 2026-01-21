@@ -270,11 +270,13 @@ function Editor:deleteWord()
 end
 
 function Editor:deleteWordRight()
-  self:homeClear()
   local line = self.line
   local position = match(line, self.wordPattern .. " *()", self.position)
-  self.line = sub(line, 1, self.position - 1) .. sub(line, position)
-  self:refreshLine()
+  if position then
+      self:homeClear()
+      self.line = sub(line, 1, self.position - 1) .. sub(line, position)
+      self:refreshLine()
+  end
 end
 
 function Editor:jumpLeft()
