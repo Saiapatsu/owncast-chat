@@ -1,0 +1,3 @@
+renames = {
+	["user ID"] = "*newname",
+}
