@@ -367,8 +367,8 @@ local keyHandlers =
   {{'\027[F', '\027OF', '\027[4~', 5}, function(self)
     self:moveEnd()
   end},
-  -- Control-U, Escape
-  {{21, 27}, function(self)
+  -- Control-U
+  {{21}, function(self)
     self:deleteLine()
   end},
   -- Control-K
@@ -406,6 +406,10 @@ local keyHandlers =
   -- Printable characters
   {{function(key, char) return char > 31 and key:sub(1,chlen(key:byte())) or nil end}, function(self, consumedKeys)
     self:insert(consumedKeys)
+  end},
+  -- Escape
+  {{function(key) return key == "\27" and key or nil end}, function(self)
+    self:deleteLine()
   end},
 }
 
