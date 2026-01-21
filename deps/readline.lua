@@ -87,6 +87,14 @@ function History.new()
 end
 
 local Editor = {}
+
+-- Assuming current line is on screen, go to its beginning even if it has wrapped
+function Editor:homeClear()
+  local rows = math.floor((self.position - 1) / self.columns)
+  local command = string.format("\x1b[%dF\x1b[0J", rows)
+  self.stdout:write(command)
+end
+
 function Editor:refreshLine()
   local line = self.line
   if self.cover then
@@ -109,11 +117,7 @@ function Editor:refreshLine()
   self.stdout:write(command)
 end
 function Editor:insertAbove(line)
-  -- Cursor to left edge
-  local command = "\x1b[0G"
-  -- Erase to right
-               .. "\x1b[0K"
-
+  self:homeClear()
   self.stdout:write(command .. line .. "\n", function()
     self:refreshLine()
   end)
@@ -129,6 +133,7 @@ function Editor:insert(character)
     self.stdout:write(display)
   else
     -- Insert the letter in the middle of the line
+    self:homeClear()
     self.line = sub(line, 1, position - 1) .. ustring.new(character) .. sub(line, position)
     self.position = position + #character
     self:refreshLine()
@@ -137,12 +142,14 @@ function Editor:insert(character)
 end
 function Editor:moveLeft()
   if self.position > 1 then
+    self:homeClear()
     self.position = self.position - 1
     self:refreshLine()
   end
 end
 function Editor:moveRight()
   if self.position - 1 ~= #self.line then
+    self:homeClear()
     self.position = self.position + 1
     self:refreshLine()
   end
@@ -160,6 +167,7 @@ function Editor:getHistory(delta)
     end
     if index == self.historyIndex then return end
     local line = ustring.new(self.history[index])
+    self:homeClear()
     self.line = line
     self.historyIndex = index
     self.position = #line + 1
@@ -170,6 +178,7 @@ function Editor:backspace()
   local line = self.line
   local position = self.position
   if position > 1 and #line > 0 then
+    self:homeClear()
     self.line = sub(line, 1, position - 2) .. sub(line, position)
     self.position = position - 1
     self.history:updateLastLine(tostring(self.line))
@@ -180,6 +189,7 @@ function Editor:delete()
   local line = self.line
   local position = self.position
   if position > 0 and #line > 0 then
+    self:homeClear()
     self.line = sub(line, 1, position - 1) .. sub(line, position + 1)
     self.history:updateLastLine(tostring(self.line))
     self:refreshLine()
@@ -197,26 +207,31 @@ function Editor:swap()
       self.position = position + 1
     end
     self.history:updateLastLine(tostring(self.line))
+    self:homeClear()
     self:refreshLine()
   end
 end
 function Editor:deleteLine()
+  self:homeClear()
   self.line = emptyline
   self.position = 1
   self.history:updateLastLine(tostring(self.line))
   self:refreshLine()
 end
 function Editor:deleteEnd()
+  self:homeClear()
   self.line = sub(self.line, 1, self.position - 1)
   self.history:updateLastLine(tostring(self.line))
   self:refreshLine()
 end
 function Editor:moveHome()
+  self:homeClear()
   self.position = 1
   self:refreshLine()
 end
 
 function Editor:moveEnd()
+  self:homeClear()
   self.position = #self.line + 1
   self:refreshLine()
 end
@@ -235,6 +250,7 @@ local function findLeft(line, position, wordPattern)
 end
 
 function Editor:deleteWord()
+  self:homeClear()
   local position = self.position
   local line = self.line
   self.position = findLeft(line, position, self.wordPattern)
@@ -243,6 +259,7 @@ function Editor:deleteWord()
 end
 
 function Editor:deleteWordRight()
+  self:homeClear()
   local line = self.line
   local position = match(line, self.wordPattern .. " *()", self.position)
   self.line = sub(line, 1, self.position - 1) .. sub(line, position)
@@ -250,10 +267,12 @@ function Editor:deleteWordRight()
 end
 
 function Editor:jumpLeft()
+  self:homeClear()
   self.position = findLeft(self.line, self.position, self.wordPattern)
   self:refreshLine()
 end
 function Editor:jumpRight()
+  self:homeClear()
   local _, e = find(self.line, self.wordPattern, self.position)
   self.position = e and e + 1 or #self.line + 1
   self:refreshLine()
@@ -278,6 +297,7 @@ function Editor:complete()
   local typ = type(res)
   if typ == "string" then
     res = ustring.new(res)
+    self:homeClear()
     self.line = res .. sub(line, position + 1)
     self.position = #res + 1
     self.history:updateLastLine(tostring(self.line))
@@ -468,7 +488,7 @@ function Editor:readLine(prompt, callback)
 
   self.prompt = prompt
   self.promptLength = #prompt
-  self.columns = self.stdout.get_winsize and self.stdout:get_winsize() or 80
+  self.columns = self.xcolumns or self.stdout.get_winsize and self.stdout:get_winsize() or 80
 
   function onKey(err, key)
     local r, out, reason = pcall(function ()

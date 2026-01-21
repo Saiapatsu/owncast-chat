@@ -180,7 +180,7 @@ return function (stdin, stdout, greeting, global)
     end
   end
 
-  local function start(historyLines, onSaveHistoryLines)
+  local function start(historyLines, onSaveHistoryLines, xcolumns)
     local prompt = ""
     local history = History.new()
     if historyLines then
@@ -192,6 +192,8 @@ return function (stdin, stdout, greeting, global)
       completionCallback = completionCallback,
       history = history
     })
+    
+    editor.xcolumns = xcolumns
 
     local function onLine(err, line)
       assert(not err, err)
@@ -217,6 +219,11 @@ return function (stdin, stdout, greeting, global)
       -- evaluateLine(req)
 	  global[requireName] = require(lib)
     end)
+	
+	return {
+		homeClear = function() return editor:homeClear() end,
+		refreshLine = function() return editor:refreshLine() end,
+	}
   end
 
   return {

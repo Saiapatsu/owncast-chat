@@ -215,14 +215,12 @@ function line(str)
 	end
 end
 
-local lastline
 local function handleError(e)
 	print(debug.traceback(e, 2))
 	print(line)
 end
 
 function line2(str)
-	lastline = str
 	xpcall(line, handleError, str)
 end
 
@@ -241,9 +239,23 @@ local half = ""
 -- File read position because read(pos) won't affect read()'s own seek point ???
 local rpos = 0
 
+local hadData = false
+
 local function onRead(err, str)
 	if err then return timer.clearInterval(t) end
-	if str == "" then return end
+	
+	if str == "" then
+		if hadData then
+			refreshLine()
+			hadData = false
+		end
+		return
+	else
+		if not hadData then
+			homeClear()
+			hadData = true
+		end
+	end
 	
 	rpos = rpos + #str
 	
@@ -306,4 +318,6 @@ function say(str)
 	sock:write(payload)
 end
 
-require("repl")(process.stdin.handle, process.stdout.handle, "REPL active", env).start()
+local repl = require("repl")(process.stdin.handle, process.stdout.handle, "REPL active", env).start(nil, nil, columns)
+homeClear = repl.homeClear
+refreshLine = repl.refreshLine
