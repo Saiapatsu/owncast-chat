@@ -1,54 +1,45 @@
-`bouncer` logs Owncast chat to disk, `chat` presents it.
-
 To run this, you need:
-* [websocat](https://github.com/vi/websocat) to connect to chat
-* [luvit](https://luvit.io/) as the programming environment
+* [websocat](https://github.com/vi/websocat) to connect to chat;
+* [luvit](https://luvit.io/) as the programming environment;
 * [ncat](https://nmap.org/ncat/), netcat may work too, can skip this if you
-  don't want to send messages
+  don't want to send messages;
 * something that behaves like `tee` to both write raw logs to disk and
   show in a console window, although that's of very little use other than
-  to see if a weird looking message is from a `chat` glitch or not
+  to see if a weird looking chat message is from a glitch or not.
 
-Open the stream's webpage with developer tools (Network tab) and look for
-`https://(host)/ws?accessToken=...`, copy this URL
+* `wss` logs Owncast chat to disk
+* `status` logs Owncast stream status to disk every minute, not used yet;
+  the most important data there is the viewer count and stream start/end time
+* `main` displays chat from the above logs
+* `setup.lua` contains chat display configuration, currently just user renames
+* `setup.bat` contains data needed to connect (which instance, chatter key)
+* `chat` downloads some chat scrollback, it isn't used for anything
+  at the moment, but is relevant because the deeper point of this tool was
+  to log the chatroom.
+* `config` dumps chat config, the emoji list and custom javascript into
+  a folder for archival purposes
 
-Replace `https` with `wss`
+First, populate `setup.bat`
+HOST is the hostname of the site with the Owncast instance, e.g. `example.com`
+TOKEN is the chat access token. Open the page with developer tools (Network tab),
+look for `https://(host)/ws?accessToken=...`, copy the URL and paste just
+the token from the end. Replace the `%3D` at the end with `=` if there's one.
 
-Open cmd in this folder, enter `set WS=(the above wss URL)`  
-Alternatively, add that line to the top of bouncer, but double the %
-near the end of the URL so it won't get mangled by batch
+Run `wss`, it will start logging chat to `data/wss-(current date).jsonl`
 
-Run bouncer, it will start logging to `wss-(current date).jsonl`
+Run `status`, it will start logging stream status to `data/status-(current date).jsonl`
 
-Run chat, it will load some scrollback from the latest log and display
-new messages as they roll in
+Run `main.lua`, it will load some scrollback from the latest log and display
+new messages as they roll in.
 
-You can write into chat. It's actually the Luvit REPL modified, you can prefix
-your message with / to run Lua code instead. Write `/say "/foo"` to say
-something that begins with a slash.
+You can write chat messages. If you prefix the message with /, it will be
+interpreted as Lua code instead. Write `/say "/foo"` to say something that
+begins with a slash.
 
-Other people's messages will appear in the middle of the message you're typing,
-I will have to mess with the readline to fix this
-
-Copying links is annoying due to the left padding, I gotta add something to
-copy the n-th link/emote from the bottom
-
-Doesn't display emotes (would libcaca help? he he he)
-
-Doesn't do word substitution, stickers and other goodies from the instance
-this was meant for, but I hope to highlight affected words
+With links in chat, emotes and stickers, you're sadly on your own.
 
 It's in a terminal because it's what was easy to make, ideally it'd be in
-an ugly win32 gui, anything's better than React
+an ugly win32 gui, anything's better than React.
 
 Goes well with streamlink, open `https://(host)/hls/0/stream.m3u8` with it
-
-You can get a little bit of scrollback from the server from:  
-`https://(host)/api/chat?accessToken=...`  
-It's not in a format `chat` can ingest (one event on each line)
-
-The viewer count is in `/api/status`, which this doesn't consult yet, examples:
-```
-{"serverTime":"2026-01-13T11:08:30.289289197Z","lastConnectTime":"2026-01-13T08:25:51Z","lastDisconnectTime":null,"versionNumber":"0.2.4","streamTitle":"","viewerCount":9,"online":true}
-{"serverTime":"2026-01-13T11:13:45.56616856Z","lastConnectTime":null,"lastDisconnectTime":"2026-01-13T11:12:15Z","versionNumber":"0.2.4","streamTitle":"","online":false}
-```
+to watch the stream, you will need to set up streamlink on your own.
