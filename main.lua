@@ -5,8 +5,11 @@ uv = require("uv")
 
 local env = getfenv()
 
-local c = {}
-for k,v in pairs({
+function ansim(a, b)
+	return string.format("\027[%d;%dm", a, b)
+end
+
+local c = {
 	--theme-color-users-0: #bc1a32;
 	--theme-color-users-1: #b3b3b3;
 	--theme-color-users-2: #96c832;
@@ -15,27 +18,23 @@ for k,v in pairs({
 	--theme-color-users-5: #daa520;
 	--theme-color-users-6: #847cfe;
 	--theme-color-users-7: #ff4500;
-	[0] = "\022\031", -- 4 dark red
-	[1] = "\001\030", -- 8 dark gray
-	-- [1] = "\001\037", -- f white
-	[2] = "\001\032", -- a light green
-	[3] = "\022\032", -- 2 dark green
-	[4] = "\022\036", -- 3 dark aqua
-	[5] = "\022\033", -- 6 gold/brown
-	[6] = "\022\035", -- 5 dark purple
-	[7] = "\001\031", -- c light red
+	[0] = ansim(22, 31), -- 4 dark red
+	[1] = ansim(01, 30), -- 8 dark gray
+	[2] = ansim(01, 32), -- a light green
+	[3] = ansim(22, 32), -- 2 dark green
+	[4] = ansim(22, 36), -- 3 dark aqua
+	[5] = ansim(22, 33), -- 6 gold/brown
+	[6] = ansim(22, 35), -- 5 dark purple
+	[7] = ansim(01, 31), -- c light red
 	
-	g = "\001\030", -- dark gray, subdued
-	w = "\001\037", -- white, highlighted
-	x = "\001\031", -- light red, danger
-	r = "\000", -- reset
-}) do
-	-- Expand each byte to numerals, separate with ;
-	c[k] = ("\027[%sm"):format(v:gsub(".", function(x) return tostring(string.byte(x)) .. ";" end):sub(1, -2))
-end
-
--- https://gist.github.com/ConnerWill/d4b6c776b509add763e17f9f113fd25b
-c.up = "\027[1A" -- "moves cursor up # lines"
+	g = ansim(01, 30), -- dark gray, subdued
+	w = ansim(01, 37), -- white, highlighted
+	x = ansim(01, 31), -- light red, danger
+	r = "\027[m", -- reset
+	
+	-- https://gist.github.com/ConnerWill/d4b6c776b509add763e17f9f113fd25b
+	up = "\027[1A", -- "moves cursor up # lines"
+}
 
 -- Width in columns of the "gutter" to the left which is to be reserved for
 -- usernames and system messages and kept clear of user-submitted messages
