@@ -34,7 +34,7 @@ for k,v in pairs({
 	c[k] = ("\027[%sm"):format(v:gsub(".", function(x) return tostring(string.byte(x)) .. ";" end):sub(1, -2))
 end
 
--- https://a/ConnerWill/d4b6c776b509add763e17f9f113fd25b
+-- https://gist.github.com/ConnerWill/d4b6c776b509add763e17f9f113fd25b
 c.up = "\027[1A" -- "moves cursor up # lines"
 
 -- Width in columns of the "gutter" to the left which is to be reserved for
