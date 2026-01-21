@@ -56,6 +56,7 @@ function setColumns(gutter, columns)
 	wrapfind = string.rep(".", columns - gutter)
 	spaces = string.rep(" ", gutter)
 	spaces1 = "%1" .. spaces
+	rule = string.rep("-", columns)
 end
 
 setColumns(gutter, columns)
@@ -161,7 +162,7 @@ end
 			-- or uanon(x.user)
 		-- lastid = x.user.id -- feels wrong
 
-function fence(str)
+function ruleStr(str)
 	local half = (columns - #str - 2) / 2
 	return string.format("%s %s %s", string.rep("-", math.ceil(half)), str, string.rep("-", math.floor(half)))
 end
@@ -174,9 +175,9 @@ function line(str)
 	
 	if type(x) ~= "table" then
 		print(string.format("\r%s%s%s%s %s %s|%s%s%s|%s\n%s%s%s%s"
-			, c.x, fence("Failed to parse JSON"), c.r
+			, c.x, ruleStr("Failed to parse JSON"), c.r
 			, type(str), type(x), c.x, c.r, str, c.x, c.r
-			, c.x, string.rep("-", columns), c.r, c.up
+			, c.x, rule, c.r, c.up
 		))
 		return
 	end
@@ -186,7 +187,7 @@ function line(str)
 		if hour ~= lastHour then
 			lastHour = hour
 			local str = x.timestamp:sub(1, 16):gsub("T", " ")
-			print(string.format("%s%s%s%s", c.g, fence(str), c.up, c.r))
+			print(string.format("%s%s%s%s", c.g, ruleStr(str), c.up, c.r))
 		end
 	end
 	
@@ -202,7 +203,7 @@ function line(str)
 		print(string.format(renamefmt, color, name, c.g, oldname, c.r))
 		
 	elseif x.type == "CHAT_ACTION" then
-		print(string.format("\r%s%s%s%s", c.g, fence(neaten(x.body)), c.r, c.up))
+		print(string.format("\r%s%s%s%s", c.g, ruleStr(neaten(x.body)), c.r, c.up))
 		
 	elseif x.type == "CONNECTED_USER_INFO" then
 		local color = ucolor(x.user)
