@@ -308,7 +308,7 @@ tail()
 -- I don't know how tail -f does it on Windows but it has a very slight
 -- delay sometimes, so it may very well be polling
 t = timer.setInterval(500, function()
-	fs.read(fd, nil, rpos, onRead)
+	fs.read(fd, nil, rpos-1, onRead)
 end)
 
 -- sock = require("net").connect(54197, "127.0.0.1", function(a) print("Socket connected") end)
