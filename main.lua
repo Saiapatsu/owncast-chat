@@ -1,6 +1,7 @@
-local json = require("json")
-local fs = require("fs")
-local timer = require("timer")
+json = require("json")
+fs = require("fs")
+timer = require("timer")
+uv = require("uv")
 
 local env = getfenv()
 
@@ -40,7 +41,7 @@ c.up = "\027[1A" -- "moves cursor up # lines"
 -- usernames and system messages and kept clear of user-submitted messages
 gutter = 11
 -- Width in columns of the tty
-width = 80
+width = uv.tty_get_winsize(process.stdout.handle)
 -- Everything derived from the above
 -- chatfmt
 -- renamefmt
