@@ -51,7 +51,6 @@ columns = uv.tty_get_winsize(process.stdout.handle)
 -- Update expected tty columns
 function setColumns(gutter, columns)
 	chatfmt = "\r%s%" .. gutter-1 .. "s%s %s%s"
-	renamefmt = "\r%s%" .. gutter-1 .. "s%s renamed from %s%s"
 	wrapfind = string.rep(".", columns - gutter)
 	spaces = string.rep(" ", gutter)
 	spaces1 = "%1" .. spaces
@@ -199,7 +198,7 @@ function line(str)
 		local color = ucolor(x.user)
 		local oldname = uanon(x.user, x.oldName)
 		local name = uanon(x.user)
-		print(string.format(renamefmt, color, name, c.g, oldname, c.r))
+		print(string.format(chatfmt, color, name, c.g, gutterwrap("renamed from " .. oldname, math.max(#name + 1, gutter)), c.r))
 		
 	elseif x.type == "CHAT_ACTION" then
 		print(string.format("\r%s%s%s%s", c.g, ruleStr(neaten(x.body)), c.r, c.up))
