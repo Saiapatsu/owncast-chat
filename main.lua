@@ -124,11 +124,13 @@ local function gutterwrap(str, x)
 		
 		local i = 1
 		while true do
+			-- utf8.offset returns the position of the n-th point, not
+			-- a length, so must find the n+1-th point and cut up to it.
 			local j = utf8.offset(line, columns-x+1, i)
-			atRightEdge = j == #line
-			x = gutter
+			atRightEdge = j == #str+1
 			table.insert(rope, string.sub(line, i, j and j-1))
-			if not j or i > #line then break end
+			x = gutter
+			if not j or j > #str then break end
 			i = j
 		end
 	end
