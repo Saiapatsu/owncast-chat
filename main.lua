@@ -2,6 +2,7 @@ json = require("json")
 fs = require("fs")
 timer = require("timer")
 uv = require("uv")
+utf8 = require("utf8")
 
 local env = getfenv()
 
@@ -69,7 +70,7 @@ local function xml(str, closing, tag)
 	elseif tag == "strong" then
 		return "**"
 	elseif tag == "br" then
-		return "\n" .. spaces
+		return "\n"
 	else
 		return #closing == 1
 			and ">"
@@ -104,33 +105,37 @@ local function neaten(str)
 		:gsub("&([^; ]+);", entity)
 end
 
--- TODO if line ends at screen width, do not emit newline or spaces i.e. don't make an empty line
--- TODO don't even print a newline at the end unless about to write a message so it stays flush with the bottom? Oh but the caret's there and it's gonna FEEL WRONG like there's more messages you can't see
--- You can also send just newlines so deal with those too
+-- Line-wrap a string such that it keeps a gutter of spaces to the left
+-- after each wrap, UTF-8 aware as long as everything's one cell wide
 local function gutterwrap(str, x)
-	-- Line wrapping
-	-- UTF-8 unaware for the time being
-	-- x: position on screen
-	-- iw: must write if exceeding this
-	-- foo: last unwritten pos in string
-	-- local foo = 1
-	-- local iw = columns - x + 1
-	-- local lastword = 0
-	-- local rope = {}
-	-- for a, b in str:gmatch("()[^ ]+()") do
-		-- if b > iw then
-			-- -- Went past the end
-			-- table.insert(rope, str:sub(foo, lastword))
-			-- table.insert(rope, string.rep())
-		-- end
-	-- end
-	
 	str = neaten(str)
-	if #str > columns - x then
-		return str:sub(1, columns - x) .. spaces .. str:sub(columns - x + 1):gsub(wrapfind, spaces1)
-	else
-		return str
+	
+	local rope = {}
+	local atRightEdge = false
+	local newline = false
+	
+	-- You can send newlines in chat, wrap within each
+	for line in str:gmatch("[^\n]+") do
+		if newline then
+			table.insert(rope, "\n")
+		else
+			newline = true
+		end
+		
+		local i = 1
+		while true do
+			local j = utf8.offset(line, columns-x, i)
+			atRightEdge = j == #line
+			x = gutter
+			table.insert(rope, string.sub(line, i, j))
+			if not j or i > #line then break end
+			i = j + 1
+		end
 	end
+	
+	-- If the last line we're about to send touches the right edge,
+	-- send a cursor up command to counter the upcoming \n from print
+	return table.concat(rope, spaces) .. (atRightEdge and c.up or "")
 end
 
 -- Filled in from config
