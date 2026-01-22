@@ -137,6 +137,11 @@ return function (stdin, stdout, greeting, global)
   end
 
   local function completionCallback(line)
+	if line:byte(1) ~= 47 then -- /
+		return
+	else
+		line = line:sub(2)
+	end
     local base, sep, rest = string.match(line, "^(.*)([.:])(.*)")
     if not base then
       rest = line
@@ -174,7 +179,7 @@ return function (stdin, stdout, greeting, global)
     end
     table.sort(items)
     if #items == 1 then
-      return base .. sep .. items[1]
+      return "/" .. base .. sep .. items[1]
     elseif #items > 1 then
       return items
     end
