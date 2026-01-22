@@ -217,12 +217,19 @@ function line(str)
 	end
 end
 
+lastLine = nil
+
 local function handleError(e)
-	print(debug.traceback(e, 2))
-	print(line)
+	print(string.format("\r%s%s%s%s\n%s|%s%s%s|%s\n%s%s%s%s"
+		, c.x, ruleStr("line() errored"), c.r
+		, debug.traceback(e, 2)
+		, c.x, c.r, lastLine, c.x, c.r
+		, c.x, rule, c.r, c.up
+	))
 end
 
 function line2(str)
+	lastLine = str
 	xpcall(line, handleError, str)
 end
 
