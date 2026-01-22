@@ -152,18 +152,12 @@ local function uanon(user, str)
 	if str == "Anonymous" then
 		return string.format("*%s", user.id)
 	end
-	return renames[user.id] or str or "*ERROR"
+	return str
 end
 
 local function ucolor(user)
 	return c[user.displayColor] or c.g
 end
-
--- local lastid = nil
-		-- local name = x.user.id == lastid
-			-- and spaces:sub(2) -- dangit
-			-- or uanon(x.user)
-		-- lastid = x.user.id -- feels wrong
 
 function ruleStr(str)
 	local half = (columns - #str - 2) / 2
@@ -196,14 +190,19 @@ function line(str)
 	
 	if x.type == "CHAT" then
 		local color = ucolor(x.user)
-		local name = uanon(x.user)
+		local name = renames[x.user.id] or uanon(x.user)
 		print(string.format(chatfmt, color, name, c.r, gutterwrap(x.body, math.max(#name + 1, gutter)), c.r))
 		
 	elseif x.type == "NAME_CHANGE" then
 		local color = ucolor(x.user)
 		local oldname = uanon(x.user, x.oldName)
 		local name = uanon(x.user)
-		print(string.format(chatfmt, color, name, c.g, gutterwrap("renamed from " .. oldname, math.max(#name + 1, gutter)), c.r))
+		local ren = renames[x.user.id]
+		if ren then
+			print(string.format(chatfmt, color, name, c.g, gutterwrap("(" .. ren .. ") renamed from " .. oldname, math.max(#name + 1, gutter)), c.r))
+		else
+			print(string.format(chatfmt, color, name, c.g, gutterwrap("renamed from " .. oldname, math.max(#name + 1, gutter)), c.r))
+		end
 		
 	elseif x.type == "CHAT_ACTION" then
 		print(string.format("\r%s%s%s%s", c.g, ruleStr(neaten(x.body)), c.r, c.up))
