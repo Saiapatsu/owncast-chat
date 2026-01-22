@@ -19,8 +19,8 @@ To run this, you need:
 * `config` dumps chat config, the emoji list and custom javascript into
   a folder for archival purposes
 
-First, populate `setup.bat`
-HOST is the hostname of the site with the Owncast instance, e.g. `example.com`
+First, populate `setup.bat`  
+HOST is the hostname of the site with the Owncast instance, e.g. `example.com`  
 TOKEN is the chat access token. Open the page with developer tools (Network tab),
 look for `https://(host)/ws?accessToken=...`, copy the URL and paste just
 the token from the end. Replace the `%3D` at the end with `=` if there's one.
@@ -34,9 +34,11 @@ new messages as they roll in.
 
 You can write chat messages. If you prefix the message with /, it will be
 interpreted as Lua code instead. Write `/say "/foo"` to say something that
-begins with a slash.
+begins with a slash and `/tail()` to reload the last 48kb or so from disk.
 
-With links in chat, emotes and stickers, you're sadly on your own.
+With links in chat, emotes and stickers, you're sadly on your own. I use
+Alt-Space K (Mar__k__), select the link, press Enter, paste into a URL bar
+and clean it up.
 
 It's in a terminal because it's what was easy to make, ideally it'd be in
 an ugly win32 gui, anything's better than React.
@@ -53,4 +55,4 @@ Now customizations to conhost shouldn't be global to the entire system.
 Press alt-space or the cmd icon at the top left of the window, Properties.  
 There, you can customize the column count and font. Use a TrueType font
 to see Unicode characters, otherwise you might just see question marks
-when somebody dumps Chinese or Japanese into chat.
+when somebody dumps Chinese or Japanese into chat. (Actually you'll see boxes)
