@@ -306,7 +306,7 @@ end
 
 -- Seek to tail, discard any line it might've jumped into the middle of
 function tail()
-	rpos = math.max(0, fs.fstatSync(fd).size - 6*4096)
+	rpos = math.max(0, fs.fstatSync(fd).size - 12*4096)
 	if rpos == 0 then
 		fs.read(fd, nil, rpos, onRead)
 	else
