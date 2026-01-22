@@ -124,12 +124,12 @@ local function gutterwrap(str, x)
 		
 		local i = 1
 		while true do
-			local j = utf8.offset(line, columns-x, i)
+			local j = utf8.offset(line, columns-x+1, i)
 			atRightEdge = j == #line
 			x = gutter
-			table.insert(rope, string.sub(line, i, j))
+			table.insert(rope, string.sub(line, i, j and j-1))
 			if not j or i > #line then break end
-			i = j + 1
+			i = j
 		end
 	end
 	
