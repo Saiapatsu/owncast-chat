@@ -316,9 +316,14 @@ end)
 -- sock = require("net").connect(54197, "127.0.0.1", function(a) print("Socket connected") end)
 sock = require("net").connect(54197, "127.0.0.1")
 
+maxSocketPayloadSize = 2048
+
 function say(str)
 	if not str:match("[^ ]") then return end
 	local payload = string.format('{"type":"CHAT","body":%s}\n', json.stringify(tostring(str)))
+	if #payload > maxSocketPayloadSize then
+		print(string.format("%sPayload is over %s byte limit%s", c.g, maxSocketPayloadSize, c.r))
+	end
 	sock:write(payload)
 end
 
