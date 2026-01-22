@@ -162,12 +162,21 @@ local function ucolor(user)
 end
 
 function ruleStr(str)
-	local half = (columns - #str - 2) / 2
+	local half = (columns - utf8.len(str) - 2) / 2
 	return string.format("%s %s %s", string.rep("-", math.ceil(half)), str, string.rep("-", math.floor(half)))
 end
 
 local lastHour = nil
 -- timestamp":"2026-01-19T23:53:58.051312309Z
+
+function padName(str)
+	local len = utf8.len(str)
+	if len < gutter - 1 then
+		return string.rep(" ", gutter - len - 1) .. str, gutter
+	else
+		return str, len + 1
+	end
+end
 
 function line(str)
 	local x = json.parse(str)
@@ -192,18 +201,18 @@ function line(str)
 	
 	if x.type == "CHAT" then
 		local color = ucolor(x.user)
-		local name = renames[x.user.id] or uanon(x.user)
-		print(string.format(chatfmt, color, name, c.r, gutterwrap(x.body, math.max(#name + 1, gutter)), c.r))
+		local name, w = padName(renames[x.user.id] or uanon(x.user))
+		print(string.format(chatfmt, color, name, c.r, gutterwrap(x.body, w), c.r))
 		
 	elseif x.type == "NAME_CHANGE" then
 		local color = ucolor(x.user)
 		local oldname = uanon(x.user, x.oldName)
-		local name = uanon(x.user)
+		local name, w = padName(uanon(x.user))
 		local ren = renames[x.user.id]
 		if ren then
-			print(string.format(chatfmt, color, name, c.g, gutterwrap("(" .. ren .. ") renamed from " .. oldname, math.max(#name + 1, gutter)), c.r))
+			print(string.format(chatfmt, color, name, c.g, gutterwrap("(" .. ren .. ") renamed from " .. oldname, w), c.r))
 		else
-			print(string.format(chatfmt, color, name, c.g, gutterwrap("renamed from " .. oldname, math.max(#name + 1, gutter)), c.r))
+			print(string.format(chatfmt, color, name, c.g, gutterwrap("renamed from " .. oldname, w), c.r))
 		end
 		
 	elseif x.type == "CHAT_ACTION" then
