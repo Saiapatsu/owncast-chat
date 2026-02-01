@@ -244,22 +244,37 @@ function line2(str)
 	xpcall(line, handleError, str)
 end
 
--- for str in io.lines() do
-	-- xpcall(line, handleError, str)
--- end
-
--- Get filename of last log (wiping off the newline...) and open it
-local name = fs.readFileSync("data/wss-last.txt"):match("[^\r\n]+")
-local fd = fs.openSync("data/" .. name, "r")
-
--- Timer handle
-local t
+-- Current log file descriptor (a low fd number, not a handle or anything)
+fd = nil
 -- Half-read line
 local half = ""
 -- File read position because read(pos) won't affect read()'s own seek point ???
 local rpos = 0
-
+-- Whether last onRead() had any data; used as a gate to only clear/restore
+-- readline when data starts/stops coming in, not inbetween every message
 local hadData = false
+
+-- Get filename of last log (wiping out the newline...) and open it
+function open(path)
+	if fd then
+		p("Closing fd:", fs.closeSync(fd))
+	end
+	
+	local function opened(...)
+		if ... then
+			fd = ...
+		else
+			p("Failed to open fd:", ...)
+		end
+	end
+	
+	if path then
+		opened(fs.openSync(path, "r"))
+	else
+		local name = fs.readFileSync("data/wss-last.txt"):match("[^\r\n]+")
+		opened(fs.openSync("data/" .. name, "r"))
+	end
+end
 
 local function onRead(err, str)
 	if err then return timer.clearInterval(t) end
@@ -302,7 +317,8 @@ local function onRead(err, str)
 	
 	-- There may be more data
 	-- The -1 is because, I shit you not, for some reason it used to skip single
-	-- characters and lead to slightly corrupt data or json parse fails sometimes
+	-- characters and lead to slightly corrupt data or json parse fails sometimes.
+	-- I didn't try understanding it, just did something to make it work again.
 	fs.read(fd, nil, rpos-1, onRead)
 end
 
@@ -313,8 +329,13 @@ local function onReadRecover(err, str)
 	return onRead(err, str:sub(b + 1))
 end
 
--- Seek to tail, discard any line it might've jumped into the middle of
+-- Seek to tail, discard any line it might've jumped into the middle of unless
+-- that line is at the beginning of the file
 function tail()
+	if not fd then
+		return print("tail: fd missing")
+	end
+	
 	rpos = math.max(0, fs.fstatSync(fd).size - 12*4096)
 	if rpos == 0 then
 		fs.read(fd, nil, rpos, onRead)
@@ -323,18 +344,40 @@ function tail()
 	end
 end
 
-tail()
+function reopen(path)
+	open(path)
+	tail()
+end
+
+reopen()
 
 -- I don't know how tail -f does it on Windows but it has a very slight
 -- delay sometimes, so it may very well be polling
-t = timer.setInterval(500, function()
-	fs.read(fd, nil, rpos-1, onRead)
+readtimer = timer.setInterval(500, function()
+	if fd then
+		fs.read(fd, nil, rpos-1, onRead)
+	end
 end)
 
--- sock = require("net").connect(54197, "127.0.0.1", function(a) print("Socket connected") end)
-sock = require("net").connect(54197, "127.0.0.1")
+-- Currently open connection to the websocket's input side (via ncat)
+-- ncat pipes into websocat instead of holding both its input and output,
+-- I guess TODO do that and get scrollback from the file but new stuff
+-- from the socket so that it doesn't poll (but the polling was very
+-- handy once)
+sock = nil
 
-maxSocketPayloadSize = 2048
+function resock()
+	if sock and sock._end then
+		sock:_end()
+	end
+	
+	-- sock = require("net").connect(54197, "127.0.0.1", function(a) print("Socket connected") end)
+	sock = require("net").connect(54197, "127.0.0.1")
+	
+	maxSocketPayloadSize = 2048
+end
+
+resock()
 
 function say(str)
 	if not str:match("[^ ]") then return end
