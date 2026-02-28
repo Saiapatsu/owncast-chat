@@ -10,7 +10,7 @@ function ansim(a, b)
 	return string.format("\027[%d;%dm", a, b)
 end
 
-local c = {
+c = {
 	--theme-color-users-0: #bc1a32;
 	--theme-color-users-1: #b3b3b3;
 	--theme-color-users-2: #96c832;
@@ -142,6 +142,7 @@ end
 
 -- Filled in from config
 renames = {}
+chatc = {}
 
 function loadSetup()
 	setfenv(assert(loadfile("./setup.lua")), env)()
@@ -201,8 +202,9 @@ function line(str)
 	
 	if x.type == "CHAT" then
 		local color = ucolor(x.user)
+		local tcolor = chatc[x.user.id] or c.r
 		local name, w = padName(renames[x.user.id] or uanon(x.user))
-		print(string.format(chatfmt, color, name, c.r, gutterwrap(x.body, w), c.r))
+		print(string.format(chatfmt, color, name, tcolor, gutterwrap(x.body, w), c.r))
 		
 	elseif x.type == "NAME_CHANGE" then
 		local color = ucolor(x.user)
