@@ -148,7 +148,7 @@ function loadSetup()
 	setfenv(assert(loadfile("./setup.lua")), env)()
 end
 
-loadSetup()
+xpcall(loadSetup, print)
 
 local function uanon(user, str)
 	str = str or user.displayName
