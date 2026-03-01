@@ -117,7 +117,10 @@ local function gutterwrap(str, x)
 	-- You can send newlines in chat, wrap within each
 	for line in str:gmatch("[^\n]+") do
 		if newline then
-			table.insert(rope, "\n")
+			if not atRightEdge then
+				table.insert(rope, "\n")
+			end
+			table.insert(rope, spaces)
 		else
 			newline = true
 		end
@@ -127,17 +130,22 @@ local function gutterwrap(str, x)
 			-- utf8.offset returns the position of the n-th point, not
 			-- a length, so must find the n+1-th point and cut up to it.
 			local j = utf8.offset(line, columns-x+1, i)
-			atRightEdge = j == #str+1
+			atRightEdge = j == #line + 1
+			if i ~= 1 then
+				table.insert(rope, spaces)
+			end
 			table.insert(rope, string.sub(line, i, j and j-1))
+			-- table.insert(rope, string.format("%s j %s #line %s", atRightEdge and "edge" or "nedge", j, #line))
+			-- table.insert(rope, atRightEdge and "edge" or "nedge")
 			x = gutter
-			if not j or j > #str then break end
+			if not j or j > #line then break end
 			i = j
 		end
 	end
 	
 	-- If the last line we're about to send touches the right edge,
 	-- send a cursor up command to counter the upcoming \n from print
-	return table.concat(rope, spaces) .. (atRightEdge and c.up or "")
+	return table.concat(rope) .. (atRightEdge and c.up or "")
 end
 
 -- Filled in from config
