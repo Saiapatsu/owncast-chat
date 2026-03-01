@@ -108,7 +108,6 @@ end
 -- Line-wrap a string such that it keeps a gutter of spaces to the left
 -- after each wrap, UTF-8 aware as long as everything's one cell wide
 local function gutterwrap(str, x)
-	str = neaten(str)
 	
 	local rope = {}
 	local atRightEdge = false
@@ -212,7 +211,11 @@ function line(str)
 		local color = ucolor(x.user)
 		local tcolor = chatc[x.user.id] or c.r
 		local name, w = padName(renames[x.user.id] or uanon(x.user))
-		print(string.format(chatfmt, color, name, tcolor, gutterwrap(x.body, w), c.r))
+		local neat = neaten(x.body)
+		print(string.format(chatfmt, color, name, tcolor, gutterwrap(neat, w), c.r))
+		if type(onChat) == "function" then
+			onChat(neat, x, say)
+		end
 		
 	elseif x.type == "NAME_CHANGE" then
 		local color = ucolor(x.user)
@@ -220,9 +223,9 @@ function line(str)
 		local name, w = padName(uanon(x.user))
 		local ren = renames[x.user.id]
 		if ren then
-			print(string.format(chatfmt, color, name, c.g, gutterwrap("(" .. ren .. ") renamed from " .. oldname, w), c.r))
+			print(string.format(chatfmt, color, name, c.g, gutterwrap(neaten("(" .. ren .. ") renamed from " .. oldname), w), c.r))
 		else
-			print(string.format(chatfmt, color, name, c.g, gutterwrap("renamed from " .. oldname, w), c.r))
+			print(string.format(chatfmt, color, name, c.g, gutterwrap(neaten("renamed from " .. oldname), w), c.r))
 		end
 		
 	elseif x.type == "CHAT_ACTION" then
@@ -264,6 +267,9 @@ local rpos = 0
 -- readline when data starts/stops coming in, not inbetween every message
 local hadData = false
 
+-- Whether current line came from the tail of the log file, not scrollback
+tailing = false
+
 -- Get filename of last log (wiping out the newline...) and open it
 function open(path)
 	if fd then
@@ -291,6 +297,14 @@ local function onRead(err, str)
 	
 	if str == "" then
 		if hadData then
+			if tailing == false then
+				-- I've since realized I added this extra check because I
+				-- misunderstood something, it should stay though
+				tailing = fs.fstatSync(fd).size == rpos - 1
+				if tailing == false then
+					print(c.x .. "tailing = false unexpectedly" .. c.r)
+				end
+			end
 			refreshLine()
 			hadData = false
 		end
@@ -345,6 +359,9 @@ function tail()
 	if not fd then
 		return print("tail: fd missing")
 	end
+	
+	-- We're about to get scrollback
+	tailing = false
 	
 	rpos = math.max(0, fs.fstatSync(fd).size - 12*4096)
 	if rpos == 0 then
