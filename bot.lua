@@ -157,10 +157,11 @@ ecLoad()
 --------------------------------------------------------------------------------
 
 local function reltime(dt)
-	if (dt >= 172800) then return string.format("%dd", dt / 86400) end -- 2d
-	if (dt >=   1800) then return string.format("%.1fh", dt / 3600) end -- 0.5h - 47.9h
-	if (dt >=    300) then return string.format("%dmin", dt / 60) end -- 5min - 29min
-	if (dt >=     60) then return string.format("%.1fmin", dt / 60) end -- 1.0min - 4.9min
+	if (dt >= 518400) then return string.format("%.0fd", dt / 86400) end -- 6d
+	if (dt >= 172800) then return string.format("%.0fd%.0fh", dt / 86400, (dt % 86400) / 3600) end -- 2d0h..5d23h
+	if (dt >=   1800) then return string.format("%.1fh", dt / 3600) end -- 0.5h..47.9h
+	if (dt >=    300) then return string.format("%.0fmin", dt / 60) end -- 5min..29min
+	if (dt >=     60) then return string.format("%.1fmin", dt / 60) end -- 1.0min..4.9min
 	return string.format("%dsec", dt)
 end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 
