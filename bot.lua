@@ -12,9 +12,9 @@ function limiter(count, period)
 	
 	return function()
 		-- true if rate limited and should quit
-		return os.clock() + period - dt < t
+		return os.time() + period - dt < t
 	end, function()
-		t = math.max(os.clock(), t) + dt
+		t = math.max(os.time(), t) + dt
 	end
 end
 
