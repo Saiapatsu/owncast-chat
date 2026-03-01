@@ -177,6 +177,22 @@ end
 local lastHour = nil
 -- timestamp":"2026-01-19T23:53:58.051312309Z
 
+-- Works on my machine
+local tz = os.time(os.date("*t", now)) - os.time(os.date("!*t", now))
+function parseTimestamp(str)
+	local pat = "^(%d%d%d%d)%-(%d%d)%-(%d%d)T(%d%d):(%d%d):(%d%d)%.?%d*Z$"
+	local Y, m, d, H, M, S = str:match(pat)
+	local now = os.time()
+	local t = os.time({
+		year = Y, month = m, day = d,
+		hour = H, min = M, sec = S,
+	}) + tz
+	-- print(str)
+	-- print(os.date("%Y-%m-%d %H:%M:%S", t)) -- local time
+	-- print(os.date("!%Y-%m-%d %H:%M:%S", t)) -- UTC
+	return t
+end
+
 function padName(str)
 	local len = utf8.len(str)
 	if len < gutter - 1 then
@@ -199,11 +215,13 @@ function line(str)
 	end
 	
 	if x.timestamp then
-		local hour = x.timestamp:sub(1, 13)
+		local hour = x.timestamp:sub(1, 15) -- Every 10 minutes
 		if hour ~= lastHour then
 			lastHour = hour
-			local str = x.timestamp:sub(1, 16):gsub("T", " ")
-			print(string.format("%s%s%s%s", c.g, ruleStr(str), c.up, c.r))
+			-- local str = x.timestamp:sub(1, 16):gsub("T", " ")
+			-- print(string.format("%s%s%s%s", c.g, ruleStr(str), c.up, c.r))
+			local date = os.date("%Y-%m-%d %H:%M", parseTimestamp(x.timestamp))
+			print(string.format("%s%s%s%s", c.g, ruleStr(date), c.up, c.r))
 		end
 	end
 	
