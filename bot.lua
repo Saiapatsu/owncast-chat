@@ -157,7 +157,7 @@ ecLoad()
 --------------------------------------------------------------------------------
 
 local function reltime(dt)
-	-- DANGER! %.f doesn't always round down: string.format("%.1f", 3599/3600)
+	-- DANGER! %.f rounds instead of truncating: string.format("%.1f", 3599/3600)
 	-- But this is only a problem in Lua 5.3 where you can't %d floats
 	if (dt >= 518400) then return string.format("%dd", math.floor(dt/86400)) end -- 6d
 	if (dt >=  86400) then return string.format("%dd%dh", math.floor(dt/86400), math.floor(dt % 86400 / 3600)) end -- 1d0h..5d23h
@@ -174,7 +174,7 @@ local function cmdEcho(neat, msg, reply, cmd, rest)
 	
 	if not name then
 		if ecList[1] then
-			ls1call(lEcSet, reply, "\\* Echoes: " .. table.concat(ecList, ", ") .. ".")
+			ls1call(lEcSet, reply, "\\* Echoes: !" .. table.concat(ecList, ", !") .. ".")
 		else
 			ls1call(lEcSet, reply, "\\* No echoes available.")
 		end
