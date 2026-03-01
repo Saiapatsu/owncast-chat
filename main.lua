@@ -152,11 +152,11 @@ end
 renames = {}
 chatc = {}
 
-function loadSetup()
+function setup()
 	setfenv(assert(loadfile("./setup.lua")), env)()
 end
 
-xpcall(loadSetup, print)
+xpcall(setup, print)
 
 local function uanon(user, str)
 	str = str or user.displayName
