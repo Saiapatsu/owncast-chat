@@ -132,7 +132,7 @@ local function reltime(dt)
 	return string.format("%dsec", dt)
 end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 
-local function cmdEcho(cmd, rest, neat, msg, reply)
+local function cmdEcho(neat, msg, reply, cmd, rest)
 	if lAll() then return end
 	if lEcSet() then return end
 	bAll()
@@ -168,7 +168,7 @@ local function cmdEcho(cmd, rest, neat, msg, reply)
 	end
 end
 
-local function cmdRecall(cmd, rest, neat, msg, reply)
+local function cmdRecall(neat, msg, reply, cmd, rest)
 	local name = cmd
 	
 	local str = ecMap[name]
@@ -209,12 +209,12 @@ function onChat(neat, msg, reply)
 	reply = reply or lsay
 	
 	if cmd == "echo" then
-		return cmdEcho(cmd, rest, neat, msg, reply)
+		return cmdEcho(neat, msg, reply, cmd, rest)
 		
 	elseif botReserved[cmd] then
 		-- Nothing
 		
 	else
-		return cmdRecall(cmd, rest, neat, msg, reply)
+		return cmdRecall(neat, msg, reply, cmd, rest)
 	end
 end
