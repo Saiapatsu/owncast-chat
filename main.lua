@@ -72,9 +72,9 @@ local function xml(str, closing, tag)
 	elseif tag == "br" then
 		return "\n"
 	else
-		return #closing == 1
-			and ">"
-			or "<"
+		return closing == ""
+			and "<"
+			or ">"
 	end
 end
 
