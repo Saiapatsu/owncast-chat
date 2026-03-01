@@ -19,9 +19,9 @@ To run this, you need:
 * `config` dumps chat config, the emoji list and custom javascript into
   a folder for archival purposes
 
-First, populate `setup.bat`  
-HOST is the hostname of the site with the Owncast instance, e.g. `example.com`  
-TOKEN is the chat access token. Open the page with developer tools (Network tab),
+First, rename `setup-example.bat` to `setup.bat` and fill it in.  
+`HOST` is the hostname of the site with the Owncast instance, e.g. `example.com`  
+`TOKEN` is the chat access token. Open the page with developer tools (Network tab),
 look for `https://(host)/ws?accessToken=...`, copy the URL and paste just
 the token from the end. Replace the `%3D` at the end with `=` if there's one.
 
@@ -56,3 +56,8 @@ Press alt-space or the cmd icon at the top left of the window, Properties.
 There, you can customize the column count and font. Use a TrueType font
 to see Unicode characters, otherwise you might just see question marks
 when somebody dumps Chinese or Japanese into chat. (Actually you'll see boxes)
+
+The TCP connection to ncat (to send chat messages) breaks occasionally, not
+sure why, but use `/resock()` to reopen the connection. If you still can't chat
+or even receive messages, then the websocket disconnected, you missed any recent
+messages since the disconnect and you should run wss, chat and main again.
