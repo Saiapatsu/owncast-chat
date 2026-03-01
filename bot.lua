@@ -1,26 +1,53 @@
 
 onChat = nil
 
--- Other bots' commands
-botReserved = {}
-
 --------------------------------------------------------------------------------
+
+-- local i = 0
 
 function limiter(count, period)
 	local dt = period/count
 	local t = 0
+	-- i = i + 1
+	-- local i = i
 	
-	return function()
-		-- true if rate limited and should quit
-		return os.time() + period - dt < t
-	end, function()
+	local function bump()
+		-- print("bump " .. i)
 		t = math.max(os.time(), t) + dt
 	end
+	
+	local function check()
+		-- false if rate limited and should quit
+		-- print(string.format("check %d %.2f", i, (period - (math.max(os.time(), t) - os.time())) / dt))
+		return os.time() + period - dt >= t and bump
+	end
+	
+	return check, bump
 end
 
-local   lAll,   bAll = limiter(5, 20)
-local lEcSet, bEcSet = limiter(2, 6)
-local lEcUse, bEcUse = limiter(2, 4)
+local   lAll = limiter(20, 30) -- Rate limit for running any known command
+local   lSay = limiter(5, 15) -- Replying
+local lEcSet = limiter(2, 6) -- Replying to !echo itself
+local lEcGet = limiter(2, 4) -- Replying to echos
+
+-- Try all vararg rate limits, bump all if all pass, none if not
+local function lims(check, ...)
+	local bump = check()
+	if not bump then return false end
+	if ... and not lims(...) then return end
+	bump()
+	return true
+end
+-- To be able to know which one of the limits failed, it should be:
+-- Try all vararg rate limits, return failing check, else bump all and nil
+
+-- Call function if lSay and another rate limit pass
+local function ls1call(check, fn, ...)
+	if lims(check, lSay) then
+		return true, fn(...)
+	end
+	return false
+end
 
 --------------------------------------------------------------------------------
 
@@ -28,6 +55,11 @@ local lEcUse, bEcUse = limiter(2, 4)
 -- ecMap = {} -- Echo command string -> response
 -- ecTime = {} -- Ec -> os.time() it was set at
 -- ecFd = nil -- Read+append echoes.txt fd number
+
+-- Bot commands that shouldn't be echoable
+ecReserved = {
+	echo = true,
+}
 
 local function ecOpen()
 	if ecFd then
@@ -133,22 +165,21 @@ local function reltime(dt)
 end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 
 local function cmdEcho(neat, msg, reply, cmd, rest)
-	if lAll() then return end
-	if lEcSet() then return end
-	bAll()
-	bEcSet()
+	if cmd ~= "echo" then return true end
+	
+	if not lims(lAll) then return end
 	
 	local name, rest = neat:match("^!?([^ \t\r\n]+)[ \t\r\n]*()", rest)
 	
 	if not name then
 		if ecList[1] then
-			reply("\\* Echoes: " .. table.concat(ecList, ", ") .. ".")
+			ls1call(lEcSet, reply, "\\* Echoes: " .. table.concat(ecList, ", ") .. ".")
 		else
-			reply("\\* No echoes available.")
+			ls1call(lEcSet, reply, "\\* No echoes available.")
 		end
 		return
-	elseif botReserved[name] then
-		reply("\\* That's disrespectful to the other bots.")
+	elseif ecReserved[name] then
+		ls1call(lEcSet, reply, "\\* Won't do that.")
 		return
 	end
 	
@@ -157,13 +188,13 @@ local function cmdEcho(neat, msg, reply, cmd, rest)
 	if new then
 		local what = ecMap[name] and "Updated" or "Added"
 		ecSet(name, new, msg and msg.id)
-		reply(string.format("\\* %s echo !%s.", what, name))
+		ls1call(lEcSet, reply, string.format("\\* %s echo !%s.", what, name))
 	else
 		if ecMap[name] then
 			ecSet(name, nil, msg and msg.id)
-			reply(string.format("\\* Cleared echo !%s.", name))
+			ls1call(lEcSet, reply, string.format("\\* Cleared echo !%s.", name))
 		else
-			reply("\\* Nothing happens.")
+			ls1call(lEcSet, reply, "\\* Nothing happens.")
 		end
 	end
 end
@@ -172,24 +203,21 @@ local function cmdRecall(neat, msg, reply, cmd, rest)
 	local name = cmd
 	
 	local str = ecMap[name]
-	if not str then return end
+	if not str then return true end
 	
-	if lAll() then return end
-	if lEcUse() then return end
-	bAll()
-	bEcUse()
+	if not lims(lAll) then return end
 	
 	local new = neat:match("[^\t\r\n]+", rest)
 	
 	if new then
 		local what = ecMap[name] and "Updated" or "Added"
 		ecSet(name, new, msg and msg.id)
-		reply(string.format("\\* %s echo !%s.", what, name))
+		ls1call(lEcGet, reply, string.format("\\* %s echo !%s.", what, name))
 	else
 		local t = ecTime[name]
 		local ago = t and reltime(os.time() - t) or "?"
 		
-		reply(string.format("\\* %s [%s]", str, ago))
+		ls1call(lEcGet, reply, string.format("\\* %s [%s]", str, ago))
 	end
 end
 
@@ -208,13 +236,8 @@ function onChat(neat, msg, reply)
 	msg = msg or {}
 	reply = reply or lsay
 	
-	if cmd == "echo" then
-		return cmdEcho(neat, msg, reply, cmd, rest)
-		
-	elseif botReserved[cmd] then
-		-- Nothing
-		
-	else
-		return cmdRecall(neat, msg, reply, cmd, rest)
-	end
+	-- truthy to fall through, falsy to handle
+	return cmdEcho(neat, msg, reply, cmd, rest)
+	and not ecReserved[cmd]
+	and cmdRecall(neat, msg, reply, cmd, rest)
 end
