@@ -84,6 +84,8 @@ return function (stdin, stdout, greeting, global)
 
   local function evaluateLine(line)
     if not line:match("^/") then
+		print(global.c.up .. global.c.up) -- ugly hack
+		global.homeClear()
 		global.say(line)
 		return ""
 	end
