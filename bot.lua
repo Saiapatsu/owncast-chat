@@ -162,7 +162,8 @@ local function reltime(dt)
 	if (dt >= 518400) then return string.format("%dd", math.floor(dt/86400)) end -- 6d
 	if (dt >=  86400) then return string.format("%dd%dh", math.floor(dt/86400), math.floor(dt % 86400 / 3600)) end -- 1d0h..5d23h
 	if (dt >=   3600) then return string.format("%.1fh", math.floor(dt/360)/10) end -- 1.0h..23.9h
-	return string.format("%02d:%02d", math.floor(dt/60), math.floor(dt%60)) -- 00:00..59:59
+	if (dt >=   60) then return string.format("%dmin", math.floor(dt/60)) end -- 1min .. 59min
+	return string.format("%dsec", math.floor(dt)) -- 0sec..59sec
 end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 
 local lEcho = limiter(2, 6)
