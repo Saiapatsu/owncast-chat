@@ -61,6 +61,7 @@ end
 ecReserved = {
 	echo = true,
 	help = true,
+	setstreamer = true,
 }
 
 local function ecOpen()
@@ -169,7 +170,6 @@ end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 
 local function cmdEcho(neat, msg, reply, cmd, rest)
 	if cmd ~= "echo" then return true end
-	
 	if not lims(lAll) then return end
 	
 	local name, rest = neat:match("^!?([^ \t\r\n]+)[ \t\r\n]*()", rest)
@@ -226,12 +226,24 @@ end
 
 local function cmdHelp(neat, msg, reply, cmd, rest)
 	if cmd ~= "help" then return true end
+	if not lims(lAll) then return end
 	
 	local list = ecList[1]
 		and string.format("Echoes: !%s.", table.concat(ecList, ", !"))
 		or "No echoes configured."
 	
 	ls1call(lHelpGet, reply, string.format("`My commands: !help, !echo. %s`", list))
+end
+
+local function cmdSetStreamer(neat, msg, reply, cmd, rest)
+	if cmd ~= "setstreamer" then return true end
+	if not lims(lAll) then return end
+	
+	local new = neat:match("[^\t\r\n]+", rest)
+	if new then
+		print("(Quietly updating !live...)")
+		ecSet("live", new, msg and msg.id)
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -251,6 +263,7 @@ function onChat(neat, msg, reply)
 	
 	-- truthy to fall through, falsy to handle
 	return cmdHelp(neat, msg, reply, cmd, rest)
+	and cmdSetStreamer(neat, msg, reply, cmd, rest)
 	and cmdEcho(neat, msg, reply, cmd, rest)
 	and not ecReserved[cmd]
 	and cmdRecall(neat, msg, reply, cmd, rest)
