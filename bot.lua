@@ -25,12 +25,6 @@ function limiter(count, period)
 	return check, bump
 end
 
-local   lAll = limiter(20, 30) -- Rate limit for running any known command
-local   lSay = limiter(5, 15) -- Replying
-local lEcSet = limiter(2, 6) -- Replying to !echo itself
-local lEcGet = limiter(2, 4) -- Replying to echos
-local lHelpGet = limiter(1, 8) -- Replying to !help
-
 -- Try all vararg rate limits, bump all if all pass, none if not
 local function lims(check, ...)
 	local bump = check()
@@ -42,9 +36,10 @@ end
 -- To be able to know which one of the limits failed, it should be:
 -- Try all vararg rate limits, return failing check, else bump all and nil
 
--- Call function if lSay and another rate limit pass
+-- Call function if lReply and another rate limit pass
+local lReply = limiter(5, 15) -- Replying
 local function ls1call(check, fn, ...)
-	if lims(check, lSay) then
+	if lims(check, lReply) then
 		return true, fn(...)
 	end
 	return false
@@ -159,6 +154,8 @@ ecLoad()
 
 --------------------------------------------------------------------------------
 
+local lAll = limiter(20, 30) -- Rate limit for running any known command
+
 local function reltime(dt)
 	-- DANGER! %.f rounds instead of truncating: string.format("%.1f", 3599/3600)
 	-- But this is only a problem in Lua 5.3 where you can't %d floats
@@ -168,6 +165,7 @@ local function reltime(dt)
 	return string.format("%02d:%02d", math.floor(dt/60), math.floor(dt%60)) -- 00:00..59:59
 end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 
+local lEcho = limiter(2, 6)
 local function cmdEcho(neat, msg, reply, cmd, rest)
 	if cmd ~= "echo" then return true end
 	if not lims(lAll) then return end
@@ -176,13 +174,13 @@ local function cmdEcho(neat, msg, reply, cmd, rest)
 	
 	if not name then
 		if ecList[1] then
-			ls1call(lEcSet, reply, string.format("`Echoes: !%s. Use !echo <cmd> <text> or !<cmd> <text> to add or modify an echo command.`", table.concat(ecList, ", !")))
+			ls1call(lEcho, reply, string.format("`Echoes: !%s. Use !echo <cmd> <text> or !<cmd> <text> to add or modify an echo command.`", table.concat(ecList, ", !")))
 		else
-			ls1call(lEcSet, reply, string.format("`No echoes available.`"))
+			ls1call(lEcho, reply, string.format("`No echoes available.`"))
 		end
 		return
 	elseif ecReserved[name] then
-		ls1call(lEcSet, reply, "`That's already a command.`")
+		ls1call(lEcho, reply, "`That's already a command.`")
 		return
 	end
 	
@@ -191,17 +189,18 @@ local function cmdEcho(neat, msg, reply, cmd, rest)
 	if new then
 		local what = ecMap[name] and "Updated" or "Added"
 		ecSet(name, new, msg and msg.id)
-		ls1call(lEcSet, reply, string.format("`%s echo !%s.`", what, name))
+		ls1call(lEcho, reply, string.format("`%s echo !%s.`", what, name))
 	else
 		if ecMap[name] then
 			ecSet(name, nil, msg and msg.id)
-			ls1call(lEcSet, reply, string.format("`Cleared echo !%s.`", name))
+			ls1call(lEcho, reply, string.format("`Cleared echo !%s.`", name))
 		else
-			ls1call(lEcSet, reply, "`Nothing happens.`")
+			ls1call(lEcho, reply, "`Nothing happens.`")
 		end
 	end
 end
 
+local lRecall = limiter(2, 4)
 local function cmdRecall(neat, msg, reply, cmd, rest)
 	local name = cmd
 	
@@ -214,15 +213,16 @@ local function cmdRecall(neat, msg, reply, cmd, rest)
 	
 	if new then
 		ecSet(name, new, msg and msg.id)
-		ls1call(lEcGet, reply, string.format("`Updated echo !%s.`", name))
+		ls1call(lRecall, reply, string.format("`Updated echo !%s.`", name))
 	else
 		local t = ecTime[name]
 		local ago = t and reltime(os.time() - t) or "?"
 		
-		ls1call(lEcGet, reply, string.format("`%s [%s]`", str, ago))
+		ls1call(lRecall, reply, string.format("`%s [%s]`", str, ago))
 	end
 end
 
+local lHelp = limiter(1, 8)
 local function cmdHelp(neat, msg, reply, cmd, rest)
 	if cmd ~= "help" then return true end
 	if not lims(lAll) then return end
@@ -231,7 +231,7 @@ local function cmdHelp(neat, msg, reply, cmd, rest)
 		and string.format("Echoes: !%s.", table.concat(ecList, ", !"))
 		or "No echoes configured."
 	
-	ls1call(lHelpGet, reply, string.format("`My commands: !help, !echo. %s`", list))
+	ls1call(lHelp, reply, string.format("`My commands: !help, !echo. %s`", list))
 end
 
 local function cmdSetStreamer(neat, msg, reply, cmd, rest)
