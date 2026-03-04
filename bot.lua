@@ -29,6 +29,7 @@ local   lAll = limiter(20, 30) -- Rate limit for running any known command
 local   lSay = limiter(5, 15) -- Replying
 local lEcSet = limiter(2, 6) -- Replying to !echo itself
 local lEcGet = limiter(2, 4) -- Replying to echos
+local lHelpGet = limiter(1, 8) -- Replying to !help
 
 -- Try all vararg rate limits, bump all if all pass, none if not
 local function lims(check, ...)
@@ -59,6 +60,7 @@ end
 -- Bot commands that shouldn't be echoable
 ecReserved = {
 	echo = true,
+	help = true,
 }
 
 local function ecOpen()
@@ -174,13 +176,13 @@ local function cmdEcho(neat, msg, reply, cmd, rest)
 	
 	if not name then
 		if ecList[1] then
-			ls1call(lEcSet, reply, "\\* Echoes: !" .. table.concat(ecList, ", !") .. ".")
+			ls1call(lEcSet, reply, string.format("`Echoes: !%s. Use !echo <cmd> <text> or !<cmd> <text> to add or modify an echo command.`", table.concat(ecList, ", !")))
 		else
-			ls1call(lEcSet, reply, "\\* No echoes available.")
+			ls1call(lEcSet, reply, string.format("`No echoes available.`"))
 		end
 		return
 	elseif ecReserved[name] then
-		ls1call(lEcSet, reply, "\\* Won't do that.")
+		ls1call(lEcSet, reply, "`That's already a command.`")
 		return
 	end
 	
@@ -189,13 +191,13 @@ local function cmdEcho(neat, msg, reply, cmd, rest)
 	if new then
 		local what = ecMap[name] and "Updated" or "Added"
 		ecSet(name, new, msg and msg.id)
-		ls1call(lEcSet, reply, string.format("\\* %s echo !%s.", what, name))
+		ls1call(lEcSet, reply, string.format("`%s echo !%s.`", what, name))
 	else
 		if ecMap[name] then
 			ecSet(name, nil, msg and msg.id)
-			ls1call(lEcSet, reply, string.format("\\* Cleared echo !%s.", name))
+			ls1call(lEcSet, reply, string.format("`Cleared echo !%s.`", name))
 		else
-			ls1call(lEcSet, reply, "\\* Nothing happens.")
+			ls1call(lEcSet, reply, "`Nothing happens.`")
 		end
 	end
 end
@@ -213,13 +215,23 @@ local function cmdRecall(neat, msg, reply, cmd, rest)
 	if new then
 		local what = ecMap[name] and "Updated" or "Added"
 		ecSet(name, new, msg and msg.id)
-		ls1call(lEcGet, reply, string.format("\\* %s echo !%s.", what, name))
+		ls1call(lEcGet, reply, string.format("`%s echo !%s.`", what, name))
 	else
 		local t = ecTime[name]
 		local ago = t and reltime(os.time() - t) or "?"
 		
-		ls1call(lEcGet, reply, string.format("\\* %s [%s]", str, ago))
+		ls1call(lEcGet, reply, string.format("`%s [%s]`", str, ago))
 	end
+end
+
+local function cmdHelp(neat, msg, reply, cmd, rest)
+	if cmd ~= "help" then return true end
+	
+	local list = ecList[1]
+		and string.format("Echoes: !%s.", table.concat(ecList, ", !"))
+		or "No echoes configured."
+	
+	ls1call(lHelpGet, reply, string.format("`My commands: !help, !echo. %s`", list))
 end
 
 --------------------------------------------------------------------------------
@@ -238,7 +250,8 @@ function onChat(neat, msg, reply)
 	reply = reply or lsay
 	
 	-- truthy to fall through, falsy to handle
-	return cmdEcho(neat, msg, reply, cmd, rest)
+	return cmdHelp(neat, msg, reply, cmd, rest)
+	and cmdEcho(neat, msg, reply, cmd, rest)
 	and not ecReserved[cmd]
 	and cmdRecall(neat, msg, reply, cmd, rest)
 end
