@@ -114,7 +114,7 @@ function ecLoad()
 	end
 	
 	table.sort(ecList, function(a, b)
-		return (ecTime[a] or 0) < (ecTime[b] or 0)
+		return (ecTime[a] or 0) > (ecTime[b] or 0)
 	end)
 	
 	print(string.format("Loaded %d echoes", #ecList))
@@ -173,10 +173,14 @@ local function cmdEcho(neat, msg, reply, cmd, rest)
 	local name, rest = neat:match("^!?([^ \t\r\n]+)[ \t\r\n]*()", rest)
 	
 	if not name then
+		local echoes = ecList[1]
+			and (" Echoes: !" .. table.concat(ecList, ", !") .. ".")
+			or ""
+		
 		if ecList[1] then
-			ls1call(lEcho, reply, string.format("`Echoes: !%s. Use !echo <cmd> <text> or !<cmd> <text> to add or modify an echo command.`", table.concat(ecList, ", !")))
+			ls1call(lEcho, reply, string.format("`Use !echo <cmd> <text> to add or modify a command, !echo <cmd> to clear, !<cmd> <text> to modify.%s`", echoes))
 		else
-			ls1call(lEcho, reply, string.format("`No echoes available.`"))
+			ls1call(lEcho, reply, "`No echoes available.`")
 		end
 		return
 	elseif ecReserved[name] then
@@ -227,11 +231,11 @@ local function cmdHelp(neat, msg, reply, cmd, rest)
 	if cmd ~= "help" then return true end
 	if not lims(lAll) then return end
 	
-	local list = ecList[1]
-		and string.format("Echoes: !%s.", table.concat(ecList, ", !"))
-		or "No echoes configured."
+	local echoes = ecList[1]
+		and (" !" .. table.concat(ecList, " !"))
+		or ""
 	
-	ls1call(lHelp, reply, string.format("`My commands: !help, !echo. %s`", list))
+	ls1call(lHelp, reply, string.format("`!help !echo%s`", echoes))
 end
 
 local function cmdSetStreamer(neat, msg, reply, cmd, rest)
