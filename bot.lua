@@ -213,9 +213,8 @@ local function cmdRecall(neat, msg, reply, cmd, rest)
 	local new = neat:match("[^\t\r\n]+", rest)
 	
 	if new then
-		local what = ecMap[name] and "Updated" or "Added"
 		ecSet(name, new, msg and msg.id)
-		ls1call(lEcGet, reply, string.format("`%s echo !%s.`", what, name))
+		ls1call(lEcGet, reply, string.format("`Updated echo !%s.`", name))
 	else
 		local t = ecTime[name]
 		local ago = t and reltime(os.time() - t) or "?"
