@@ -436,7 +436,7 @@ end
 function changeColor(id)
 	id = tonumber(id)
 	if type(id) ~= "number" and not c[id] then
-		return print("Not a valid color, at least not here")
+		return print(string.format("%sNot a valid color, at least not here%s", c.g, c.r))
 	end
 	local payload = string.format('{"type":"COLOR_CHANGE","newColor":%d}\n', json.stringify(id))
 	if #payload > maxSocketPayloadSize then
