@@ -433,6 +433,26 @@ function say(str)
 	sock:write(payload)
 end
 
+function changeColor(id)
+	id = tonumber(id)
+	if type(id) ~= "number" and not c[id] then
+		return print("Not a valid color, at least not here")
+	end
+	local payload = string.format('{"type":"COLOR_CHANGE","newColor":%d}\n', json.stringify(id))
+	if #payload > maxSocketPayloadSize then
+		print(string.format("%sPayload is over %s byte limit%s", c.g, maxSocketPayloadSize, c.r))
+	end
+	sock:write(payload)
+end
+
+function changeName(str)
+	local payload = string.format('{"type":"NAME_CHANGE","newName":%s}\n', json.stringify(str))
+	if #payload > maxSocketPayloadSize then
+		print(string.format("%sPayload is over %s byte limit%s", c.g, maxSocketPayloadSize, c.r))
+	end
+	sock:write(payload)
+end
+
 local repl = require("repl")(process.stdin.handle, process.stdout.handle, "REPL active", env).start(nil, nil, columns)
 homeClear = repl.homeClear
 refreshLine = repl.refreshLine
