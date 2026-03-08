@@ -56,7 +56,6 @@ end
 ecReserved = {
 	echo = true,
 	help = true,
-	setstreamer = true,
 }
 
 local function ecOpen()
@@ -239,17 +238,6 @@ local function cmdHelp(neat, msg, reply, cmd, rest)
 	ls1call(lHelp, reply, string.format("`!help !echo%s`", echoes))
 end
 
-local function cmdSetStreamer(neat, msg, reply, cmd, rest)
-	if cmd ~= "setstreamer" then return true end
-	if not lims(lAll) then return end
-	
-	local new = neat:match("[^\t\r\n]+", rest)
-	if new then
-		print("(Quietly updating !live...)")
-		ecSet("live", new, msg and msg.id)
-	end
-end
-
 --------------------------------------------------------------------------------
 
 function lsay(str)
@@ -267,7 +255,6 @@ function onChat(neat, msg, reply)
 	
 	-- truthy to fall through, falsy to handle
 	return cmdHelp(neat, msg, reply, cmd, rest)
-	and cmdSetStreamer(neat, msg, reply, cmd, rest)
 	and cmdEcho(neat, msg, reply, cmd, rest)
 	and not ecReserved[cmd]
 	and cmdRecall(neat, msg, reply, cmd, rest)
