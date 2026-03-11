@@ -279,8 +279,10 @@ end
 fd = nil
 -- Half-read line
 local half = ""
--- File read position because read(pos) won't affect read()'s own seek point ???
+-- File read position because it's IMPOSSIBLE to set the seek position in node
 local rpos = 0
+-- Beginning of the tail
+local tpos = 0
 -- Whether last onRead() had any data; used as a gate to only clear/restore
 -- readline when data starts/stops coming in, not inbetween every message
 local hadData = false
@@ -318,9 +320,11 @@ local function onRead(err, str)
 			if tailing == false then
 				-- I've since realized I added this extra check because I
 				-- misunderstood something, it should stay though
-				tailing = fs.fstatSync(fd).size == rpos - 1
+				local size = fs.fstatSync(fd).size
+				tailing = size == rpos
 				if tailing == false then
-					print(c.x .. "tailing = false unexpectedly" .. c.r)
+					print(string.format("%stailing = false unexpectedly, size=%s rpos=%s%s"
+						, c.x, size, rpos, c.r))
 				end
 			end
 			refreshLine()
@@ -334,13 +338,15 @@ local function onRead(err, str)
 		end
 	end
 	
-	rpos = rpos + #str
-	
 	local pos = str:match("()\n")
 	if pos then
 		-- New message arrived and there's a newline
 		-- Finish the line in progress
-		line2(half .. str:sub(1, pos - 1))
+		-- If it begins at tpos and isn't the start of the file, drop it because
+		-- it's most likely cut off
+		if rpos - #half ~= tpos or tpos == 0 then
+			line2(half .. str:sub(1, pos - 1))
+		end
 		pos = pos + 1
 		while true do
 			local b = str:match("()\n", pos)
@@ -357,18 +363,10 @@ local function onRead(err, str)
 		half = half .. str
 	end
 	
+	rpos = rpos + #str
+	
 	-- There may be more data
-	-- The -1 is because, I shit you not, for some reason it used to skip single
-	-- characters and lead to slightly corrupt data or json parse fails sometimes.
-	-- I didn't try understanding it, just did something to make it work again.
-	fs.read(fd, nil, rpos-1, onRead)
-end
-
-local function onReadRecover(err, str)
-	if err or str == "" then return end
-	local b = str:match("()\n")
-	rpos = rpos + b + 1
-	return onRead(err, str:sub(b + 1))
+	fs.read(fd, 4096, rpos, onRead)
 end
 
 -- Seek to tail, discard any line it might've jumped into the middle of unless
@@ -381,12 +379,11 @@ function tail()
 	-- We're about to get scrollback
 	tailing = false
 	
-	rpos = math.max(0, fs.fstatSync(fd).size - 12*4096)
-	if rpos == 0 then
-		fs.read(fd, nil, rpos, onRead)
-	else
-		fs.read(fd, nil, rpos, onReadRecover)
-	end
+	local size = fs.fstatSync(fd).size
+	local leap = math.min(size, 12*4096)
+	tpos = size - leap
+	rpos = tpos
+	fs.read(fd, leap, rpos, onRead)
 end
 
 function reopen(path)
@@ -400,7 +397,7 @@ reopen()
 -- delay sometimes, so it may very well be polling
 readtimer = timer.setInterval(500, function()
 	if fd then
-		fs.read(fd, nil, rpos-1, onRead)
+		fs.read(fd, nil, rpos, onRead)
 	end
 end)
 
