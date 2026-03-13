@@ -63,18 +63,20 @@ setColumns(gutter, columns)
 local function xml(str, closing, tag)
 	if tag == "p" then
 		return ""
+	elseif tag == "a" then
+		return ""
 	elseif tag == "img" then
 		return str:match('alt="([^"]+)')
 	elseif tag == "em" then
 		return "*"
 	elseif tag == "strong" then
 		return "**"
+	elseif tag == "code" then
+		return "`"
 	elseif tag == "br" then
 		return "\n"
 	else
-		return closing == ""
-			and "<"
-			or ">"
+		return closing == "" and "<" or ">"
 	end
 end
 
