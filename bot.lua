@@ -47,16 +47,16 @@ end
 
 --------------------------------------------------------------------------------
 
+ecCmd = {} -- string -> fn
 -- ecList = {} -- Array of ecMap keys
 -- ecMap = {} -- Echo command string -> response
 -- ecTime = {} -- Ec -> os.time() it was set at
 -- ecFd = nil -- Read+append echoes.txt fd number
 
--- Bot commands that shouldn't be echoable
-ecReserved = {
-	echo = true,
-	help = true,
-}
+local function ecCanSet(k)
+	local previous = ecCmd[k]
+	return previous == cmdRecall or previous == nil
+end
 
 local function ecOpen()
 	if ecFd then
@@ -86,12 +86,16 @@ local function ecLine(pos, str)
 		return print(string.format("ecLine incomplete at pos %d", pos))
 	end
 	
-	if v then
+	if not ecCanSet(k) then
+		return
+	elseif v then
 		ecMap[k] = v
 		ecTime[k] = t
+		ecCmd[k] = cmdRecall
 	else
 		ecMap[k] = nil
 		ecTime[k] = nil
+		ecCmd[k] = nil
 	end
 end
 
@@ -134,12 +138,14 @@ function ecSet(k, v, m)
 		ecAppend(k, v, t, m)
 		ecMap[k] = v
 		ecTime[k] = t
+		ecCmd[k] = cmdRecall
 	else
 		if not ecMap[k] then return end
 		local t = os.time()
 		ecAppend(k, v, t, m)
 		ecMap[k] = nil
 		ecTime[k] = nil
+		ecCmd[k] = nil
 		for i,v in ipairs(ecList) do
 			if v == k then
 				table.remove(ecList, i)
@@ -149,11 +155,7 @@ function ecSet(k, v, m)
 	end
 end
 
-ecLoad()
-
 --------------------------------------------------------------------------------
-
-local lAll = limiter(20, 30) -- Rate limit for running any known command
 
 local function reltime(dt)
 	-- DANGER! %.f rounds instead of truncating: string.format("%.1f", 3599/3600)
@@ -165,27 +167,37 @@ local function reltime(dt)
 	return string.format("%dsec", math.floor(dt)) -- 0sec..59sec
 end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 
+--------------------------------------------------------------------------------
+
+local lAll = limiter(20, 30) -- Rate limit for running any known command
 local lEcho = limiter(2, 6)
-local function cmdEcho(neat, msg, reply, cmd, rest)
-	if cmd ~= "echo" then return true end
+local lRecall = limiter(2, 4)
+local lHelpMain = limiter(1, 8)
+local lHelpSub = limiter(3, 8)
+
+-- Do nothing, but prevent overwriting with an echo
+function cmdNothing(act)
+end
+
+function cmdEcho(act, reply, cmd, rest, msg, neat)
 	if not lims(lAll) then return end
 	
-	local name, rest = neat:match("^!?([^ \t\r\n]+)[ \t\r\n]*()", rest)
-	
-	if not name then
+	if act == "help" then
 		local echoes = ecList[1]
-			and (" Echoes: !" .. table.concat(ecList, ", !") .. ".")
-			or ""
-		
-		if ecList[1] then
-			ls1call(lEcho, reply, string.format("`Use !echo <cmd> <text> to add or modify a command, !echo <cmd> to clear, !<cmd> <text> to modify.%s`", echoes))
-		else
-			ls1call(lEcho, reply, "`No echoes available.`")
-		end
+			and ("Echoes: !" .. table.concat(ecList, ", !") .. ".")
+			or "No echoes available."
+		return ls1call(lHelpSub, reply, string.format("`Use !echo <cmd> <text> to add or modify a command, !echo <cmd> to clear, !<cmd> <text> to modify.\n%s`", echoes))
+	elseif act ~= "cmd" then
 		return
-	elseif ecReserved[name] then
-		ls1call(lEcho, reply, "`That's already a command.`")
-		return
+	end
+	
+	local name, rest = neat:match("^!?([^ \t\r\n]+)[ \t\r\n]*()", rest)
+	if not name then
+		return cmdEcho("help", reply)
+	end
+	
+	if not ecCanSet(name) then
+		return ls1call(lEcho, reply, "`That's already a command.`")
 	end
 	
 	local new = neat:match("[^\t\r\n]+", rest)
@@ -204,38 +216,54 @@ local function cmdEcho(neat, msg, reply, cmd, rest)
 	end
 end
 
-local lRecall = limiter(2, 4)
-local function cmdRecall(neat, msg, reply, cmd, rest)
-	local name = cmd
-	
-	local str = ecMap[name]
-	if not str then return true end
-	
+function cmdRecall(act, reply, cmd, rest, msg, neat)
 	if not lims(lAll) then return end
+	
+	if act == "help" then
+		return ls1call(lHelpSub, reply, string.format("`!%s is an echo command.`", cmd))
+	elseif act ~= "cmd" then
+		return
+	end
+	
+	local str = ecMap[cmd]
+	if not str then return end
 	
 	local new = neat:match("[^\t\r\n]+", rest)
 	
 	if new then
-		ecSet(name, new, msg and msg.id)
-		ls1call(lRecall, reply, string.format("`Updated echo !%s.`", name))
+		ecSet(cmd, new, msg and msg.id)
+		ls1call(lRecall, reply, string.format("`Updated echo !%s.`", cmd))
 	else
-		local t = ecTime[name]
+		local t = ecTime[cmd]
 		local ago = t and reltime(os.time() - t) or "?"
 		
 		ls1call(lRecall, reply, string.format("`%s [%s]`", str, ago))
 	end
 end
 
-local lHelp = limiter(1, 8)
-local function cmdHelp(neat, msg, reply, cmd, rest)
-	if cmd ~= "help" then return true end
+function cmdHelp(act, reply, cmd, rest, msg, neat)
 	if not lims(lAll) then return end
 	
-	local echoes = ecList[1]
-		and (" !" .. table.concat(ecList, " !"))
-		or ""
+	if act == "help" then
+		return ls1call(lHelpSub, reply, "`You know it, buddy.`")
+	elseif act ~= "cmd" then
+		return
+	end
 	
-	ls1call(lHelp, reply, string.format("`!help !echo%s`", echoes))
+	local name, rest = neat:match("^!?([^ \t\r\n]+)[ \t\r\n]*()", rest)
+	
+	if not name then
+		local echoes = ecList[1]
+			and (" !" .. table.concat(ecList, " !"))
+			or ""
+		
+		return ls1call(lHelpMain, reply, string.format("`!help !echo%s`", echoes))
+	end
+	
+	local fn = ecCmd[name]
+	if fn then
+		fn("help", reply, name, rest, msg, neat)
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -253,9 +281,13 @@ function onChat(neat, msg, reply)
 	msg = msg or {}
 	reply = reply or lsay
 	
-	-- truthy to fall through, falsy to handle
-	return cmdHelp(neat, msg, reply, cmd, rest)
-	and cmdEcho(neat, msg, reply, cmd, rest)
-	and not ecReserved[cmd]
-	and cmdRecall(neat, msg, reply, cmd, rest)
+	local fn = ecCmd[cmd]
+	if fn then
+		fn("cmd", reply, cmd, rest, msg, neat)
+	end
 end
+
+ecCmd.help = cmdHelp
+ecCmd.echo = cmdEcho
+
+ecLoad()
