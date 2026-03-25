@@ -39,9 +39,9 @@ c = {
 
 -- Width in columns of the "gutter" to the left which is to be reserved for
 -- usernames and system messages and kept clear of user-submitted messages
-gutter = 11
+-- gutter = 11
 -- Width in columns of the tty
-columns = uv.tty_get_winsize(process.stdout.handle)
+-- columns = 
 -- Everything derived from the above
 -- chatfmt
 -- renamefmt
@@ -50,7 +50,9 @@ columns = uv.tty_get_winsize(process.stdout.handle)
 -- spaces1
 
 -- Update expected tty columns
-function setColumns(gutter, columns)
+function setColumns(_gutter, _columns)
+	gutter = _gutter or gutter or 11
+	columns = _columns or columns or uv.tty_get_winsize(process.stdout.handle)
 	chatfmt = "\r%s%" .. gutter-1 .. "s%s %s%s"
 	wrapfind = string.rep(".", columns - gutter)
 	spaces = string.rep(" ", gutter)
@@ -58,7 +60,7 @@ function setColumns(gutter, columns)
 	rule = string.rep("-", columns)
 end
 
-setColumns(gutter, columns)
+setColumns()
 
 local function xml(str, closing, tag)
 	if tag == "p" then
