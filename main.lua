@@ -245,13 +245,18 @@ function line(str)
 		local name, w = padName(uanon(x.user))
 		local ren = renames[x.user.id]
 		if ren then
-			print(string.format(chatfmt, color, name, c.g, gutterwrap(neaten("(" .. ren .. ") renamed from " .. oldname), w), c.r))
+			print(string.format(chatfmt, color, name, c.g, gutterwrap("(" .. ren .. ") renamed from " .. oldname, w), c.r))
 		else
-			print(string.format(chatfmt, color, name, c.g, gutterwrap(neaten("renamed from " .. oldname), w), c.r))
+			print(string.format(chatfmt, color, name, c.g, gutterwrap("renamed from " .. oldname, w), c.r))
 		end
 		
 	elseif x.type == "CHAT_ACTION" then
 		print(string.format("\r%s%s%s%s", c.g, ruleStr(neaten(x.body)), c.r, c.up))
+		if tailing and x.body:match("Stay tuned,") then
+			if type(onLive) == "function" then
+				onLive(x)
+			end
+		end
 		
 	elseif x.type == "CONNECTED_USER_INFO" then
 		local color = ucolor(x.user)
