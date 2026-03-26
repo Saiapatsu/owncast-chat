@@ -380,7 +380,7 @@ end
 
 -- Seek to tail, discard any line it might've jumped into the middle of unless
 -- that line is at the beginning of the file
-function tail()
+function tail(_leap)
 	if not fd then
 		return print("tail: fd missing")
 	end
@@ -389,7 +389,7 @@ function tail()
 	tailing = false
 	
 	local size = fs.fstatSync(fd).size
-	local leap = math.min(size, 12*4096)
+	local leap = math.min(size, _leap or 12*4096)
 	tpos = size - leap
 	rpos = tpos
 	fs.read(fd, leap, rpos, onRead)
