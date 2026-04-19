@@ -26,7 +26,7 @@ function limiter(count, period)
 end
 
 -- Try all vararg rate limits, bump all if all pass, none if not
-local function lims(check, ...)
+function lims(check, ...)
 	local bump = check()
 	if not bump then return false end
 	if ... and not lims(...) then return end
@@ -38,7 +38,7 @@ end
 
 -- Call function if lReply and another rate limit pass
 local lReply = limiter(5, 15) -- Replying
-local function ls1call(check, fn, ...)
+function ls1call(check, fn, ...)
 	if lims(check, lReply) then
 		return true, fn(...)
 	end
@@ -275,11 +275,15 @@ end
 function onChat(neat, msg, reply)
 	if not tailing then return end
 	
-	local cmd, rest = neat:match("^!([^ \t\r\n]+)[ \t\r\n]*()")
-	if not cmd then return end
-	
 	msg = msg or {}
 	reply = reply or lsay
+	
+	if noclanking and noclanking(neat, msg, reply) then
+		return
+	end
+	
+	local cmd, rest = neat:match("^!([^ \t\r\n]+)[ \t\r\n]*()")
+	if not cmd then return end
 	
 	local fn = ecCmd[cmd]
 	if fn then
