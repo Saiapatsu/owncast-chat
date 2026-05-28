@@ -258,6 +258,16 @@ function line(str)
 			end
 		end
 		
+	elseif x.type == "USER_PARTED" then
+		local color = c.g
+		local name, w = padName(renames[x.user.id] or uanon(x.user))
+		print(string.format(chatfmt, color, name, c.g, gutterwrap("parted", w), c.r))
+		
+	elseif x.type == "USER_JOINED" then
+		local color = c.g
+		local name, w = padName(renames[x.user.id] or uanon(x.user))
+		print(string.format(chatfmt, color, name, c.g, gutterwrap("joined", w), c.r))
+		
 	elseif x.type == "CONNECTED_USER_INFO" then
 		local color = ucolor(x.user)
 		local name = uanon(x.user)
