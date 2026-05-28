@@ -23,7 +23,9 @@ First, rename `setup-example.bat` to `setup.bat` and fill it in.
 `HOST` is the hostname of the site with the Owncast instance, e.g. `example.com`  
 `TOKEN` is the chat access token. Open the page with developer tools (Network tab),
 look for `https://(host)/ws?accessToken=...`, copy the URL and paste just
-the token from the end. Replace the `%3D` at the end with `=` if there's one.
+the token from the end. Replace the `%3D` at the end with `=` if there's one.  
+`WSSPORT` is the TCP port used to send chats, change this if you have multiple
+instances.
 
 Run `wss`, it will start logging chat to `data/wss-(current date).jsonl`
 
