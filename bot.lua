@@ -86,6 +86,10 @@ local function ecLine(pos, str)
 		return print(string.format("ecLine incomplete at pos %d", pos))
 	end
 	
+	if type(t) == "string" then
+		t = assert(parseTimestamp(t))
+	end
+	
 	if not ecCanSet(k) then
 		return
 	elseif v then
@@ -129,19 +133,17 @@ local function ecAppend(k, v, t, m)
 	fs.fsyncSync(ecFd)
 end
 
-function ecSet(k, v, m)
+function ecSet(k, v, t, m)
 	if v then
 		if not ecMap[k] then
 			table.insert(ecList, k)
 		end
-		local t = os.time()
 		ecAppend(k, v, t, m)
 		ecMap[k] = v
 		ecTime[k] = t
 		ecCmd[k] = cmdRecall
 	else
 		if not ecMap[k] then return end
-		local t = os.time()
 		ecAppend(k, v, t, m)
 		ecMap[k] = nil
 		ecTime[k] = nil
@@ -202,13 +204,15 @@ function cmdEcho(act, reply, cmd, rest, msg, neat)
 	
 	local new = neat:match("[^\t\r\n]+", rest)
 	
+	local t = msg.timestamp or os.time()
+	
 	if new then
 		local what = ecMap[name] and "Updated" or "Added"
-		ecSet(name, new, msg and msg.id)
+		ecSet(name, new, t, msg and msg.id)
 		ls1call(lEcho, reply, string.format("`%s echo !%s.`", what, name))
 	else
 		if ecMap[name] then
-			ecSet(name, nil, msg and msg.id)
+			ecSet(name, nil, t, msg and msg.id)
 			ls1call(lEcho, reply, string.format("`Cleared echo !%s.`", name))
 		else
 			ls1call(lEcho, reply, "`Nothing happens.`")
@@ -230,8 +234,10 @@ function cmdRecall(act, reply, cmd, rest, msg, neat)
 	
 	local new = neat:match("[^\t\r\n]+", rest)
 	
+	local t = msg.timestamp or os.time()
+	
 	if new then
-		ecSet(cmd, new, msg and msg.id)
+		ecSet(cmd, new, t, msg and msg.id)
 		ls1call(lRecall, reply, string.format("`Updated echo !%s.`", cmd))
 	else
 		local t = ecTime[cmd]
