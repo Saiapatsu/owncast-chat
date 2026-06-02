@@ -134,6 +134,10 @@ local function ecAppend(k, v, t, m)
 end
 
 function ecSet(k, v, t, m)
+	if type(t) == "string" then
+		t = assert(parseTimestamp(t))
+	end
+	
 	if v then
 		if not ecMap[k] then
 			table.insert(ecList, k)
