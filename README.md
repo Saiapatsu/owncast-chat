@@ -1,3 +1,6 @@
+Owncast chat logger and reader in Luvit Lua for legacy Windows conhost.  
+Not tested on other terminal emulators.
+
 To run this, you need:
 * [websocat](https://github.com/vi/websocat) to connect to chat;
 * [luvit](https://luvit.io/) as the programming environment;
@@ -7,17 +10,17 @@ To run this, you need:
   show in a console window, although that's of very little use other than
   to see if a weird looking chat message is from a glitch or not.
 
-* `wss` logs Owncast chat to disk
-* `status` logs Owncast stream status to disk every minute, not used yet;
-  the most important data there is the viewer count and stream start/end time
-* `main` displays chat from the above logs
+* `wss` logs Owncast chat to disk;
+* `main` displays chat from the logs;
+* `status` periodically polls Owncast stream status, not used yet;
+  (the most important data there is the viewer count and stream start/end time)
 * `setup.lua` contains chat display configuration, currently just user renames
 * `setup.bat` contains data needed to connect (which instance, chatter key)
 * `chat` downloads some chat scrollback, it isn't used for anything
   at the moment, but is relevant because the deeper point of this tool was
-  to log the chatroom.
+  to log the chatroom;
 * `config` dumps chat config, the emoji list and custom javascript into
-  a folder for archival purposes
+  a folder for archival purposes.
 
 First, rename `setup-example.bat` to `setup.bat` and fill it in.  
 `HOST` is the hostname of the site with the Owncast instance, e.g. `example.com`  
@@ -34,13 +37,16 @@ Run `status`, it will start logging stream status to `data/status-(current date)
 Run `main.lua`, it will load some scrollback from the latest log and display
 new messages as they roll in.
 
+Run `chat.lua`, it will download any available chat scrollback (the chat reader
+ignores it, this is only for chat logging purposes)
+
 You can write chat messages. If you prefix the message with /, it will be
 interpreted as Lua code instead. Write `/say "/foo"` to say something that
 begins with a slash and `/tail()` to reload the last 48kb or so from disk.
 
 With links in chat, emotes and stickers, you're sadly on your own. I use
-Alt-Space K (Mar__k__), select the link, press Enter, paste into a URL bar
-and clean it up.
+Alt-Space E (__E__dit) K (Mar__k__), select the link, press Enter, paste
+into a URL bar and clean it up.
 
 It's in a terminal because it's what was easy to make, ideally it'd be in
 an ugly win32 gui, anything's better than React.
