@@ -175,7 +175,7 @@ end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 
 --------------------------------------------------------------------------------
 
-local lAll = limiter(20, 30) -- Rate limit for running any known command
+lAll = limiter(20, 30) -- Rate limit for running any known command
 local lEcho = limiter(2, 6)
 local lRecall = limiter(2, 4)
 local lHelpMain = limiter(1, 8)
