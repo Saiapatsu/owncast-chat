@@ -78,7 +78,9 @@ local function ecLine(pos, str)
 	local x = json.parse(str)
 	
 	if type(x) ~= "table" then
-		return print(string.format("ecLine error at pos %d", pos))
+		-- return print(string.format("ecLine error at pos %d", pos))
+		-- I've begun dumping manual echoes here, anything that's not json can just be ignored
+		return
 	end
 	
 	local k, v, t = x.k, x.v, x.t
