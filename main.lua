@@ -332,7 +332,7 @@ function open(path)
 end
 
 local function onRead(err, str)
-	if err then return timer.clearInterval(t) end
+	if err then return timer.clearInterval(readtimer) end
 	
 	if str == "" then
 		if hadData then
