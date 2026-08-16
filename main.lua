@@ -273,6 +273,14 @@ function line(str)
 		local name = uanon(x.user)
 		print(string.format("\r%sConnected as %s%s%s", c.g, color, name, c.r))
 		
+	elseif x.type == "META" then
+		-- Bouncer disconnected
+		print(string.format("\r%s<%s> %s%s", c.g, x.type, str, c.r))
+		timer.setTimeout(1000, function()
+			xpcall(reopen, print)
+			xpcall(resock, print)
+		end)
+		
 	else
 		print(string.format("\r%s<%s> %s%s", c.g, x.type, str, c.r))
 	end
@@ -468,6 +476,13 @@ function changeName(str)
 	end
 	sock:write(payload)
 end
+
+function ping()
+	local payload = '{"type":"PING"}\n'
+	sock:write(payload)
+end
+
+pingtimer = timer.setInterval(300000, ping)
 
 local repl = require("repl")(process.stdin.handle, process.stdout.handle, "REPL active", env).start(nil, nil, columns)
 homeClear = repl.homeClear
