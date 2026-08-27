@@ -164,6 +164,7 @@ function ecSet(k, v, t, m)
 end
 
 --------------------------------------------------------------------------------
+-- Reputation/karma system inspired by the one in eggdrop IRC bot
 
 REP_MAX_LEN = 32
 
@@ -346,35 +347,44 @@ function cmdHelp(act, reply, cmd, rest, msg, neat)
 	end
 end
 
-function repCmd(delta, act, reply, cmd, rest, msg, neat)
+function cmdRepImpl(delta, act, reply, cmd, rest, msg, neat)
 	if not lims(lAll) then return end
 	
 	if act == "help" then
 		local a = delta == 1 and "Add" or "Remove"
-		local b = delta == 1 and "to" or "from"
+		-- local b = delta == 1 and "to" or "from"
 		local c = delta == 1 and "++" or "--"
-		return ls1call(lHelpSub, reply, string.format("`%s one point of karma %s something, case-sensitive. Usage: !%s foo, foo%s`", a, b, c, c))
+		return ls1call(lHelpSub, reply, string.format("`%s one rep. Usage: foo%s, !%s foo`", a, c, c))
 	elseif act ~= "cmd" then
 		return
 	end
 	
-	local str = neat:sub(rest)
+	-- Get just the command body (if a command), clip trailing spaces
+	local pos2 = neat:match("()[ \t\r\n]*$")
+	local str = neat:sub(rest, pos2-1)
+	
 	if #str > REP_MAX_LEN then
 		return ls1call(lRep, reply, "`Be more concise, please.`")
 	end
 	
-	local value = repMod(str, delta)
+	if str == "" then
+		return cmdRepImpl(delta, "help", reply)
+	end
+	
+	-- Naively case-fold before adjusting rep
+	local value = repMod(str:lower(), delta)
+	
 	if value then
-		return ls1call(lRep, reply, string.format("`'%s' now has %d karma.`", str, value))
+		return ls1call(lRep, reply, string.format("`'%s' now has %d rep.`", str, value))
 	end
 end
 
 function cmdRepAdd(...)
-	repCmd(1, ...)
+	cmdRepImpl(1, ...)
 end
 
 function cmdRepRem(...)
-	repCmd(-1, ...)
+	cmdRepImpl(-1, ...)
 end
 
 --------------------------------------------------------------------------------
