@@ -165,6 +165,73 @@ end
 
 --------------------------------------------------------------------------------
 
+REP_MAX_LEN = 32
+
+local function repOpen()
+	if repFd then
+		p("Closing repFd:", fs.closeSync(repFd))
+	end
+	
+	repMap = {}
+	
+	local function opened(...)
+		if ... then
+			repFd = ...
+		else
+			p("Failed to open repFd:", ...)
+		end
+	end
+	
+	opened(fs.openSync("data/rep.txt", "a+"))
+end
+
+local function repLine(pos, str)
+	local x = json.parse(str)
+	
+	if type(x) ~= "table" then
+		return print(string.format("repLine error at pos %d", pos))
+	end
+	
+	local k, v, d = x.k, x.v, x.d
+	
+	if not k then
+		return print(string.format("repLine incomplete at pos %d", pos))
+	elseif v then
+		repMap[k] = v
+	elseif d then
+		repMap[k] = (repMap[k] or 0) + d
+	else
+		return print(string.format("repLine incomplete at pos %d", pos))
+	end
+end
+
+function repLoad()
+	repOpen()
+	if not repFd then return end
+	
+	local str = fs.readSync(repFd, fs.fstatSync(repFd).size)
+	for pos, line in str:gmatch("()([^\r\n]+)") do
+		xpcall(repLine, print, pos, line)
+	end
+	
+	print("Loaded karma")
+end
+
+function repAppend(k, v, d)
+	if not repFd then return end
+	fs.writeSync(repFd, nil, json.stringify({k = k, v = v, d = d}) .. "\n")
+	fs.fsyncSync(repFd)
+end
+
+function repMod(str, delta)
+	local value = (repMap[str] or 0) + delta
+	repAppend(str, value, delta)
+	repMap[str] = value
+	return value
+end
+
+--------------------------------------------------------------------------------
+
 local function reltime(dt)
 	-- DANGER! %.f rounds instead of truncating: string.format("%.1f", 3599/3600)
 	-- But this is only a problem in Lua 5.3 where you can't %d floats
@@ -180,6 +247,7 @@ end -- snippet 99FC610C994C1235081EB788912EDBAF 20260301181419
 lAll = limiter(20, 30) -- Rate limit for running any known command
 local lEcho = limiter(2, 6)
 local lRecall = limiter(2, 4)
+local lRep = limiter(5, 15)
 local lHelpMain = limiter(1, 8)
 local lHelpSub = limiter(3, 8)
 
@@ -278,6 +346,37 @@ function cmdHelp(act, reply, cmd, rest, msg, neat)
 	end
 end
 
+function repCmd(delta, act, reply, cmd, rest, msg, neat)
+	if not lims(lAll) then return end
+	
+	if act == "help" then
+		local a = delta == 1 and "Add" or "Remove"
+		local b = delta == 1 and "to" or "from"
+		local c = delta == 1 and "++" or "--"
+		return ls1call(lHelpSub, reply, string.format("`%s one point of karma %s something, case-sensitive. Usage: !%s foo, foo%s`", a, b, c, c))
+	elseif act ~= "cmd" then
+		return
+	end
+	
+	local str = neat:sub(rest)
+	if #str > REP_MAX_LEN then
+		return ls1call(lRep, reply, "`Be more concise, please.`")
+	end
+	
+	local value = repMod(str, delta)
+	if value then
+		return ls1call(lRep, reply, string.format("`'%s' now has %d karma.`", str, value))
+	end
+end
+
+function cmdRepAdd(...)
+	repCmd(1, ...)
+end
+
+function cmdRepRem(...)
+	repCmd(-1, ...)
+end
+
 --------------------------------------------------------------------------------
 
 function lsay(str)
@@ -295,15 +394,31 @@ function onChat(neat, msg, reply)
 	end
 	
 	local cmd, rest = neat:match("^!([^ \t\r\n]+)[ \t\r\n]*()")
-	if not cmd then return end
+	if cmd then
+		local fn = ecCmd[cmd]
+		if fn then
+			fn("cmd", reply, cmd, rest, msg, neat)
+		end
+		return
+	end
 	
-	local fn = ecCmd[cmd]
-	if fn then
-		fn("cmd", reply, cmd, rest, msg, neat)
+	if #neat <= REP_MAX_LEN then
+		local last2 = neat:sub(-2)
+		if last2 == "++" or last2 == "--" then
+			local fn = ecCmd[last2]
+			if fn then
+				local cut = neat:sub(1, -3)
+				fn("cmd", reply, last2, 1, msg, cut)
+				return
+			end
+		end
 	end
 end
 
 ecCmd.help = cmdHelp
 ecCmd.echo = cmdEcho
+ecCmd["++"] = cmdRepAdd
+ecCmd["--"] = cmdRepRem
 
 ecLoad()
+repLoad()
