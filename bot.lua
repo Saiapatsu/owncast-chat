@@ -269,7 +269,7 @@ function cmdHelp(act, reply, cmd, rest, msg, neat)
 			and (" !" .. table.concat(ecList, " !"))
 			or ""
 		
-		return ls1call(lHelpMain, reply, string.format("`!help !echo%s`", echoes))
+		return ls1call(lHelpMain, reply, string.format("`.!help !echo !++ !--%s`", echoes))
 	end
 	
 	local fn = ecCmd[name]
