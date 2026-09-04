@@ -215,6 +215,8 @@ function line(str)
 			, type(str), type(x), c.x, c.r, str, c.x, c.r
 			, c.x, rule, c.r, c.up
 		))
+		-- Might herald a disconnection, recover asap
+		timer.setTimeout(1000, ping)
 		return
 	end
 	
